@@ -1,154 +1,159 @@
 # 15分クイックスタート  
-## ― 何も考えずに1回まわす ―
+## ― submodule 前提で、何も考えずに1周回す ―
 
 このチュートリアルの目的はただ一つ。
 
-> **「この仕組み、動くな」  
-> と思ってもらうこと**
+> **「この仕組み、ちゃんと動くな」  
+> と体験的に理解すること**
 
-思想理解・最適設計・正しさは不要です。
+思想理解・最適設計・正しさは不要です。  
+**手を動かして、1回まわす**ことだけをやります。
 
 ---
 
 ## 0. 前提（読むだけ・1分）
 
-- Git 管理されたリポジトリ
+- Git が使える
 - bash が使える
-- Codex CLI / ChatGPT は「あるもの」とする
+- このリポジトリ（research-workflow）を **framework repo** として参照する
 
-LLMを使わなくても、このチュートリアルは成立します。
+👉 **実際の作業は、すべて project repo で行います。**
 
 ---
 
-## 1. ディレクトリを用意する（2分）
+## 1. project repo を作る（2分）
 
-以下があれば十分です。
+まず、作業用ディレクトリを作ります。
+
+```bash
+mkdir project-A
+cd project-A
+git init
+```
+
+ここが **成果物・実験・コードが生まれる場所**です。
+
+
+
+## 2. framework を submodule として追加（2分）
 
 ~~~
-project/
-├── bin/
-│ └── run_exp
+git submodule add https://github.com/kenoogl/research-workflow.git framework
+~~~
+
+結果：
+
+~~~
+project-A/
+├── .git/
+├── .gitmodules
+└── framework/        # research-workflow（submodule）
+~~~
+
+
+
+## 3. テンプレートを project 側にコピー（2分）
+
+~~~
+cp -r framework/templates/project/* .
+~~~
+
+これで、project repo に必要な最小構成が揃います。
+
+~~~
+project-A/
+├── framework/
+├── ai_context/
 ├── experiments/
-│ └── exp_001/
-│ └── config.yaml
+├── bin/
+├── src/
 ├── logs/
 ├── results/
-└── src/
+└── README.md
 ~~~
 
-まだコードは書きません。
 
----
 
-## 2. ダミーの設定を書く（1分）
+## 4. hook を有効化（1分・任意だが推奨）
 
-`experiments/exp_001/config.yaml`
+成果物と由来を常にセットで残すため、
+ pre-commit hook を有効にします。
 
-```yaml
+~~~
+ln -s framework/hooks/pre-commit .git/hooks/pre-commit
+~~~
+
+※ 失敗しても致命的ではありません（後で設定可）。
+
+
+
+## 5. ダミーの実験設定を書く（1分）
+
+```
+cat experiments/exp_001/config.yaml
+
 name: exp_001
 description: first test run
 parameter_a: 1.0
 parameter_b: 2.0
 ```
 
-
-
 意味はありません。
-**存在すればOK**。
+ **存在すればOK**。
 
-------
 
-## 3. run_exp を置く（3分）
 
-`bin/run_exp` を作成し、以下を貼り付けてください。
+## 6. 実行してみる（1分）
 
-```bash
-#!/usr/bin/env bash
-set -e
-
-EXP_NAME="$1"
-CONFIG="experiments/${EXP_NAME}/config.yaml"
-OUTDIR="results/${EXP_NAME}"
-LOGDIR="logs"
-META="${LOGDIR}/run.json"
-
-mkdir -p "${OUTDIR}" "${LOGDIR}"
-
-GIT_COMMIT=$(git rev-parse --short HEAD)
-GIT_DIRTY=$(git diff --quiet || echo true)
-
-cat <<EOF > "${META}"
-{
-  "timestamp": "$(date -Iseconds)",
-  "git_commit": "${GIT_COMMIT}",
-  "git_dirty": "${GIT_DIRTY}",
-  "config": "${CONFIG}",
-  "output": "${OUTDIR}"
-}
-EOF
-
-echo "[run_exp] run.json written"
-```
-
-権限を付与：
-
-```
-chmod +x bin/run_exp
-```
-
-------
-
-## 4. 実行してみる（1分）
-
-```
+~~~
 ./bin/run_exp exp_001
-```
+~~~
 
 成功すると：
 
-```
+~~~
 logs/run.json
-```
+~~~
 
 が生成されます。
 
 👉 **この時点で成功です。**
-まだ何も計算していません。
+ まだ何も計算していません。
 
-------
 
-## 5. ダミー結果を置く（1分）
 
-```
+## 7. ダミー結果を置く（1分）
+
+~~~
 mkdir -p results/exp_001
 echo "dummy result" > results/exp_001/output.txt
-```
+~~~
 
-------
 
-## 6. Git に保存する（2分）
 
-```
-git add logs/run.json results/exp_001
+## 8. Git に保存する（2分）
+
+~~~
+git add .
 git commit -m "exp001: first run"
-```
+~~~
 
-もし hook が入っていれば：
+- `results/` がある
+- `logs/run.json` がある
 
-- run.json が無いと止まる
-- あると普通に通る
+この2つが揃っていれば、
+ hook が有効でもコミットは通ります
 
-これを体験できればOK。
 
-------
 
-## 7. ここまでで何が起きたか（読むだけ・2分）
+## 9. ここまでで何が起きたか（読むだけ・2分）
 
 あなたは今：
 
-- 実験名を決め
-- 実行したことを **機械的に記録**し
-- 結果と由来を **セットで保存**しました
+- project repo を作り
+- framework を **参照点として固定**し
+- 実行の由来（run.json）と成果を
+- **機械的にセットで保存**しました
 
 まだ：
 
@@ -157,36 +162,37 @@ git commit -m "exp001: first run"
 - コードを書いていない
 
 それでも、
-**「後から使える成果の最小形」**は完成しています。
+ **「後から使える成果の最小形」**は完成しています。
 
-------
 
-## 8. 余力があれば（＋3分）
 
-### codex_plan.md を1行で書く
+## 10. 余力があれば（＋3分）
 
-```
-ai_context/codex_plan.md
+### codex_plan.md を1行だけ書く
+
+~~~
+cat ai_context/codex_plan.md
+
 ## Objective
-- first test
-```
+- first test run
+~~~
 
 完璧さは不要です。
 
-------
 
-## 9. この先に自然につながること
+
+## 11. この先に自然につながること
 
 - `src/` にコードを書く
-- run_exp の最後に実行行を足す
+- `run_exp` の最後に実行行を足す
 - Atlas に「この結果どう思う？」と聞く
-- codex_results.md を1段落書く
+- `codex_results.md` を1段落書く
 
 **順番は自由**です。
 
-------
 
-## 10. まとめ（重要）
+
+## 12. まとめ（重要）
 
 この15分でやったことは：
 
@@ -199,15 +205,14 @@ ai_context/codex_plan.md
 
 は、もう手に入っています。
 
-それだけで、このワークフローを使う価値はあります。
+それだけで、このワークフローを使う価値は十分です。
 
-------
+
 
 次に読むなら：
 
-- `CONCEPT.md`（なぜこうしているか）
-- README（全体像）
-- FAQ（よくある詰まりポイント）
+- `CONCEPT.md`（なぜこの設計なのか）
+- `README.md`（全体像）
+- project repo の `README.md`（日常運用）
 
 どれも、急ぐ必要はありません。
-
