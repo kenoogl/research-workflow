@@ -1,0 +1,32 @@
+# .codexrc  (v0.1)
+
+safety:
+  forbid_commands:
+    - rm -rf /
+    - rm -rf ~
+    - dd if=
+    - mkfs
+    - shutdown
+    - reboot
+
+  confirm_commands:
+    - rm -rf
+    - git reset --hard
+    - git clean -fd
+    - sudo
+
+execution:
+  require_clean_git: false
+  warn_if_dirty: true
+
+  require_run_metadata: true
+  run_metadata_path: logs/run.json
+
+  forbid_direct_execution:
+    - python
+    - julia
+    - mpirun
+
+  allowed_wrappers:
+    - ./bin/run
+    - ./bin/run_exp

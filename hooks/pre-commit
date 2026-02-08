@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+set -e
+if git diff --cached --name-only | grep -q '^results/'; then
+  if ! git diff --cached --name-only | grep -q '^logs/run.json$'; then
+    echo "[hook] results/ をコミットするには logs/run.json が必要です"
+    echo "[hook] ./bin/run_exp を通して実行してください"
+    exit 1
+  fi
+fi
