@@ -46,7 +46,9 @@ LLM（ChatGPT / Codex など）は
 
 ## 最低限の使い方（全体像）
 
-### プロジェクトのルートディレクトリを決める
+
+
+### 0. プロジェクトのルートディレクトリを決める
 
 ~~~
 (anywhere)
@@ -55,13 +57,20 @@ LLM（ChatGPT / Codex など）は
 
 
 
-## framework 導入（submodule）
-
+### 1. project repo を作る
 ```bash
+mkdir project-A
 cd project-A
 git init
-git submodule add https://github.com/kenoogl/research-workflow.git framework
 ```
+
+
+
+### 2. framework を submodule として追加
+
+~~~
+git submodule add https://github.com/kenoogl/research-workflow.git framework
+~~~
 
 この時点で
 
@@ -72,80 +81,11 @@ project-A/
 └── framework/        ← framework repo（submodule）
 ~~~
 
+
+
+### 3. テンプレートを project 側にコピー
+
 framework が用意した **project 用ひな形**を**project-A/ の直下にコピー**する
-
-~~~
-cp -r framework/templates/project/* .
-~~~
-
-📍 結果
-
-~~~
-project-A/            ← cd ここ
-├── framework/        ← submodule（触らない）
-│   └── research-workflow
-│
-├── ai_context/       ← あなたの思考
-├── experiments/      ← 実験定義
-├── logs/             ← 実行ログ
-├── results/          ← 成果物
-├── src/              ← コード
-└── bin/run_exp       ← 実行入口
-~~~
-
-今の状態を **project repo として確定**し、framework の参照 commit も一緒に固定される
-
-~~~
-git commit -m "init project with research-workflow framework"
-~~~
-
-📍 これで：
-
-> 「この project は framework の **このバージョン**を使って始まった」
-
-が、**再現可能な形で記録**される。
-
-
-
----
-
-### これで起きていること（読む必要なし）
-
-- framework が `framework/` に固定される
-- project repo で成果物を作る準備が整う
-- 再現性は Git が勝手に守る
-
----
-
-### 協力者メモ（非公開でもOK）
-
-もし hook が効かない場合：
-
-```bash
-ln -s framework/hooks/pre-commit .git/hooks/pre-commit
-```
-
-
-
-### 1️⃣ project repo を作る
-```bash
-mkdir project-A
-cd project-A
-git init
-```
-
-
-
-### 2️⃣ framework を submodule として追加
-
-~~~
-git submodule add <URL-to-research-workflow> framework
-git commit -m "add research-workflow framework"
-~~~
-
-
-
-### 3️⃣ テンプレートを project 側にコピー
 
 ~~~
 cp -r framework/templates/project/* .
@@ -153,9 +93,33 @@ cp -r framework/templates/project/* .
 
 以降、project repo 側で作業します。
 
+ディレクトリ構成は次のようになっている。
+
+~~~
+project-A/            ← cd ここ
+├── framework/        ← submodule（触らない）
+│   └── templates
+│       └── project
+│           └── ...
+├── ai_context/       ← あなたの思考
+├── bin/run_exp       ← 実行入口
+├── experiments/      ← 実験定義
+├── logs/             ← 実行ログ
+├── results/          ← 成果物
+└── src/              ← コード
+~~~
+
+今の状態を **project repository として確定**し、framework の参照も一緒にコミット
+
+~~~
+git commit -m "add research-workflow framework"
+~~~
+
+これで、どのバージョンのワークフローを使ってプロジェクトを進めているかがわかる。
 
 
-### 4️⃣ 実験を定義する
+
+### 4. 実験を定義する
 
 ~~~
 experiments/exp_001/config.yaml
@@ -163,7 +127,7 @@ experiments/exp_001/config.yaml
 
 
 
-### 5️⃣ 実行する（唯一の入口）
+### 5. 実行する（唯一の入口）
 
 ~~~
 ./bin/run_exp exp_001
@@ -174,7 +138,7 @@ experiments/exp_001/config.yaml
 
 
 
-### 6️⃣ 結果を保存する
+### 6. 結果を保存する
 
 ~~~
 results/exp_001/
@@ -182,6 +146,12 @@ results/exp_001/
 
 👉 results/ をコミットするには run.json が必須
 （git hook が自動でチェックします）
+
+もし hook が効かない場合：
+
+```bash
+ln -s framework/hooks/pre-commit .git/hooks/pre-commit
+```
 
 
 
@@ -313,3 +283,124 @@ Codex に何かさせる前に、
 
 まずは 1 実験、1 結果、1 commit。
 そこから自然に広がります。
+
+
+
+------
+
+------
+
+
+
+## 既にあるプロジェクトに適用させる場合
+
+- 新規プロジェクトとして作り直すのではなく、既存プロジェクトを「このフレームワークの型に寄せる」方針
+
+
+
+### STEP 1：現状をそのまま project repo にする（最小）
+
+まずは **既存 ディレクトリをそのまま project repo にする**。
+
+```
+cd project-hoge
+git status   # まず現状確認
+```
+
+- ここでは **構造を変えない**
+- コードも動かさない
+
+👉 **“現場保存”が最優先**
+
+------
+
+### STEP 2：framework を submodule として「後付け」する
+
+```
+git submodule add https://github.com/kenoogl/research-workflow.git framework
+```
+
+これで：
+
+```
+project-hoge/
+├── framework/   ← 追加される
+├── src/         ← これ以降は既存ファイル群
+├── results/
+├── scripts/
+└── ...
+```
+
+👉 **ここではまだ run_exp も hook も使わない**
+
+------
+
+### STEP 3：最低限の3点だけ合わせる
+
+#### ① bin/run_exp を導入（コピーでOK）
+
+```
+cp framework/templates/project/bin/run_exp bin/
+chmod +x bin/run_exp
+```
+
+- 中身は **まだ実行しなくていい**
+- 入口を「1つある」状態にする
+
+------
+
+#### ② logs/run.json を“これから”作り始める
+
+過去の実験は無理に遡らない。
+
+👉 **「今日以降の実行」だけ**：
+
+```
+./bin/run_exp mg_exp_resume
+```
+
+- 実行しなくても run.json が出ればOK
+
+------
+
+#### ③ ai_context を“これから”書き始める
+
+```
+mkdir -p ai_context
+```
+
+最低限これだけ（例）：
+
+```
+# ai_context/atlas_notes.md
+
+## 状態
+- project-hoge は既に baseline / xxxx を実装済み
+- 残差停滞が低周波誤差由来と仮定
+
+## これから
+- restriction/prolongation の設計見直し
+- smoother としての Taylor iteration 再解釈
+```
+
+👉 **過去を完璧に再構築しない**のがコツ。
+
+------
+
+### STEP 4：ここからは「通常運用」に入る
+
+ここから先は、新規プロジェクトと同じ。
+
+- 実行 → run_exp
+- 結果 → results/
+- 評価 → judge_reviews.md
+- 判断 → 人間（あなた）
+
+------
+
+## やらなくていいこと（重要）
+
+❌ 過去の全実験に run.json を付け直す
+ ❌ ディレクトリ構成を全部 templates に合わせる
+ ❌ いきなり hook を有効にする
+ ❌ 既存コードを無理に書き換える
