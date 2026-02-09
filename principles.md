@@ -1,4 +1,9 @@
 # Principles  
+
+![](docs/principles_overview_v0.1.1.png)
+
+
+
 ## ― このフレームワークが削らない原則 ―
 
 このドキュメントは、  
@@ -136,6 +141,8 @@
 - 論文にするか
 
 を決めるのは、常に **人間**。
+
+![](docs/llm_as_judge_flow_v0.1.1.png)
 
 ---
 
