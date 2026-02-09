@@ -125,6 +125,8 @@ git commit -m "add research-workflow framework"
 experiments/exp_001/config.yaml
 ~~~
 
+[config.yamlの例](docs/description_of_exp_config.md)
+
 
 
 ### 5. 実行する（唯一の入口）
@@ -133,8 +135,10 @@ experiments/exp_001/config.yaml
 ./bin/run_exp exp_001
 ~~~
 
-→ logs/run.json が自動生成されます
+→ 実験名`"exp_001"`で`logs/run.json` が自動生成されます
 （どのコード・設定・commit で実行したかの記録）
+
+[run_expスクリプトの書き方](docs/how2make_run_exp.md)
 
 
 
@@ -152,19 +156,6 @@ results/exp_001/
 ```bash
 ln -s framework/hooks/pre-commit .git/hooks/pre-commit
 ```
-
-
-
-### LLMの使い分け（迷ったらこれ）
-
-- 考える・評価する → Atlas（ChatGPT）
-
-- 構造を整える → Codex App
-
-- 動かす・実験する → Codex CLI
-
-
-迷ったら Atlas に戻ればOK。
 
 
 

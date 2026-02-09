@@ -3,7 +3,7 @@
 このリポジトリは、実際の研究・実験・提案書作成を行う **project repo** です。  
 方法論と仕組みは `framework/`（research-workflow）にあります。
 
-この README に書かれたコマンドは、すべて **project repo のルート**で実行する。
+この README に書かれたコマンドは、すべて **project repo のルート**で実行します。
 
 ---
 
