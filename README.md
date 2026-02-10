@@ -44,7 +44,7 @@ LLM（ChatGPT / Codex など）は
 
 
 
-## 最低限の使い方（全体像）
+## 利用の準備
 
 
 
@@ -119,50 +119,11 @@ git commit -m "add research-workflow framework"
 
 
 
-### 4. 実験を定義する
+## 使い方
 
-~~~
-experiments/exp_001/config.yaml
-~~~
+### 4. 実験意図を記述（重要・必須）
 
-[config.yamlの例](docs/description_of_exp_config.md)
-
-
-
-### 5. 実行する（唯一の入口）
-
-~~~
-./bin/run_exp exp_001
-~~~
-
-→ 実験名`"exp_001"`で`logs/run.json` が自動生成されます
-（どのコード・設定・commit で実行したかの記録）
-
-[run_expスクリプトの書き方](docs/how2make_run_exp.md)
-
-
-
-### 6. 結果を保存する
-
-~~~
-results/exp_001/
-~~~
-
-👉 results/ をコミットするには run.json が必須
-（git hook が自動でチェックします）
-
-もし hook が効かない場合：
-
-```bash
-ln -s framework/hooks/pre-commit .git/hooks/pre-commit
-```
-
-
-
-### codex_plan.md について（重要）
-
-Codex に何かさせる前に、
-雑でいいので司令書を書きます。
+Codex に何かさせる前に、雑でいいので司令書を書きます。
 
 例（これで十分）：
 
@@ -185,6 +146,57 @@ Codex に何かさせる前に、
 - 箇条書きでOK
 
 - 後から読めれば十分
+
+
+
+### 5. 実験を定義する
+
+~~~
+experiments/exp_001/config.yaml
+~~~
+
+[config.yamlの例](docs/description_of_exp_config.md)
+
+
+
+### 6. 実行する（唯一の入口）
+
+~~~
+./bin/run_exp exp_001
+~~~
+
+→ 実験名`"exp_001"`で`logs/run.json` が自動生成されます
+（どのコード・設定・commit で実行したかの記録）
+
+[run_expスクリプトの書き方](docs/how2make_run_exp.md)
+
+
+
+### 7. 結果を保存する
+
+- 必要であれば、後処理などを行い、結果を`results/exp_001/`へ保存
+- 結果のコメントなどは`codex_results.md`に記述
+
+
+
+### 8. 実験の評価
+
+JudgeプロセスでAIが評価し、その結果を人が判断する。
+
+
+
+### 9. 結果を保存する
+
+👉 results/ をコミットするには run.json が必須
+（git hook が自動でチェックします）
+
+もし hook が効かない場合：
+
+```bash
+ln -s framework/hooks/pre-commit .git/hooks/pre-commit
+```
+
+
 
 
 
@@ -265,7 +277,7 @@ Codex に何かさせる前に、
 
 - principles.md
 
-  → 削れない設計原則
+  → 設計原則
 
 
 

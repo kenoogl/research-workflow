@@ -9,7 +9,20 @@
 
 ## まずやること
 
-1. 実験設定を書く  
+1. フレームワークの準備
+
+   ~~~
+   mkdir project-A
+   cd project-A
+   git init
+   git submodule add https://github.com/kenoogl/research-workflow.git framework
+   cp -r framework/templates/project/* .
+   git commit -m "add research-workflow framework"
+   ~~~
+
+   フレームワークのREADME.mdを参照
+
+2. 実験設定を書く  
 
   ~~~
   experiments/exp_001/config.yaml
@@ -218,7 +231,7 @@ PASS / REVISE / REJECT / ESCALATE
 
 
 
-## 既にあるプロジェクトに適用させる場合
+## 既にあるプロジェクトに適用する場合
 
 - 新規プロジェクトとして作り直すのではなく、既存プロジェクトを「このフレームワークの型に寄せる」方針
 
@@ -330,3 +343,11 @@ mkdir -p ai_context
  ❌ ディレクトリ構成を全部 templates に合わせる
  ❌ いきなり hook を有効にする
  ❌ 既存コードを無理に書き換える
+
+
+
+## FAQ
+
+logs/run.json は最新の実行を表します。
+過去の実行履歴は Git の commit 履歴と
+results/<exp_name>/ の差分によって追跡します。
