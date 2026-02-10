@@ -76,14 +76,14 @@ project/
 
 ```bash
 #!/usr/bin/env bash
-set -e
+set -euo pipefail
 
-# -------------------------
-# 0. 引数
-# -------------------------
-EXP_NAME="$1"
+# =========================
+# 0. 引数チェック
+# =========================
+EXP_NAME="${1:-}"
 if [ -z "$EXP_NAME" ]; then
-  echo "Usage: ./bin/run_exp <experiment_name>"
+  echo "Usage: ./bin/run_exp <experiment_name>" >&2
   exit 1
 fi
 
@@ -93,37 +93,79 @@ LOGDIR="logs"
 RUN_JSON="${LOGDIR}/run.json"
 
 if [ ! -f "$CONFIG" ]; then
-  echo "Config not found: $CONFIG"
+  echo "[run_exp] Config not found: ${CONFIG}" >&2
   exit 1
 fi
 
 mkdir -p "$OUTDIR" "$LOGDIR"
 
-# -------------------------
-# 1. Git 情報
-# -------------------------
-PROJECT_COMMIT=$(git rev-parse --short HEAD)
-FRAMEWORK_COMMIT=$(git -C framework rev-parse --short HEAD 2>/dev/null || echo "none")
-GIT_DIRTY=$(git diff --quiet || echo true)
+# =========================
+# 1. Git 情報（project）
+# =========================
+if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+  PROJECT_COMMIT="$(git rev-parse --short HEAD)"
+  if git diff --quiet && git diff --cached --quiet; then
+    PROJECT_DIRTY=false
+  else
+    PROJECT_DIRTY=true
+  fi
+else
+  PROJECT_COMMIT="unknown"
+  PROJECT_DIRTY="unknown"
+fi
 
-# -------------------------
-# 2. run.json 作成
-# -------------------------
-cat <<EOF > "$RUN_JSON"
+# =========================
+# 2. Git 情報（framework submodule）
+# =========================
+FRAMEWORK_PATH="framework"
+if [ -d "${FRAMEWORK_PATH}" ] && git -C "${FRAMEWORK_PATH}" rev-parse --git-dir >/dev/null 2>&1; then
+  FRAMEWORK_COMMIT="$(git -C "${FRAMEWORK_PATH}" rev-parse --short HEAD)"
+  if git -C "${FRAMEWORK_PATH}" diff --quiet && git -C "${FRAMEWORK_PATH}" diff --cached --quiet; then
+    FRAMEWORK_DIRTY=false
+  else
+    FRAMEWORK_DIRTY=true
+  fi
+else
+  FRAMEWORK_COMMIT="none"
+  FRAMEWORK_DIRTY="none"
+fi
+
+# =========================
+# 3. WARNING（停止しない）
+# =========================
+if [ "${PROJECT_DIRTY}" = true ]; then
+  echo "[WARNING] Project repo has uncommitted changes (dirty=true)." >&2
+  echo "[WARNING] Results may not be reproducible." >&2
+fi
+
+if [ "${FRAMEWORK_DIRTY}" = true ]; then
+  echo "[WARNING] Framework repo has uncommitted changes (dirty=true)." >&2
+  echo "[WARNING] Methodology version may be ambiguous." >&2
+fi
+
+# =========================
+# 4. 実行コマンド表現
+# =========================
+CMD="./bin/run_exp ${EXP_NAME}"
+
+# =========================
+# 5. run.json 出力（事実のみ）
+# =========================
+cat <<EOF > "${RUN_JSON}"
 {
   "run_id": "${EXP_NAME}",
   "timestamp": "$(date -Iseconds)",
-  "framework": {
-    "name": "research-workflow",
-    "commit": "${FRAMEWORK_COMMIT}"
-  },
   "project": {
     "commit": "${PROJECT_COMMIT}",
-    "dirty": "${GIT_DIRTY}"
+    "dirty": ${PROJECT_DIRTY}
+  },
+  "framework": {
+    "commit": "${FRAMEWORK_COMMIT}",
+    "dirty": ${FRAMEWORK_DIRTY}
   },
   "execution": {
     "entrypoint": "./bin/run_exp",
-    "command": "./bin/run_exp ${EXP_NAME}"
+    "command": "${CMD}"
   },
   "inputs": {
     "config": "${CONFIG}"
@@ -136,11 +178,15 @@ EOF
 
 echo "[run_exp] run.json written to ${RUN_JSON}"
 
-# -------------------------
-# 3. 実行
-# -------------------------
-# ↓ ここだけが問題依存
-julia src/main.jl --config "${CONFIG}" --out "${OUTDIR}"
+# =========================
+# 6. 実行（問題依存・唯一の可変点）
+# =========================
+# ここだけを各プロジェクトで書き換える
+# 例：Poisson / MG (Julia)
+# julia src/main.jl --config "${CONFIG}" --out "${OUTDIR}"
+
+echo "[run_exp] Ready to execute experiment '${EXP_NAME}'"
+
 ```
 
 ------
@@ -172,6 +218,22 @@ julia src/main.jl --config "${CONFIG}" --out "${OUTDIR}"
 - 実験を増やしても run_exp は増えない
 
 👉 **run_exp が安定点になる**
+
+------
+
+## 実行結果とコードバージョンについて
+
+本プロジェクトでは、すべての実行結果は  
+**どのソースコードで生成されたか**を必ず記録します。
+
+実行時に生成される `logs/run.json` には、以下が含まれます。
+
+- project repo の git commit
+- framework（submodule）の git commit
+- dirty state（未コミット変更の有無）
+
+これにより、
+「この結果はどのコードで出たか」を後から一意に特定できます。
 
 ------
 
@@ -230,3 +292,23 @@ echo "looks converged" >> results
 それ以上やりたくなったら、
 **それは run_exp の責務じゃない**。
 
+
+
+------
+
+## run.json 仕様
+
+### project.commit
+
+実行時点の project repo の git commit hash。
+この値が同一であれば、ソースコードは同一であることを保証する。
+
+### project.dirty
+
+未コミットの変更が存在する場合は true。
+再現性に注意が必要であることを示す。
+
+### framework.commit
+
+利用している framework（submodule）の git commit hash。
+方法論・運用ルールのバージョンを特定するために用いる。

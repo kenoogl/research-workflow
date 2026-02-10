@@ -87,6 +87,26 @@ git describe --tags --dirty --always
 
 
 
+## 実行時の注意（重要）
+
+本プロジェクトでは、実行時点で
+未コミットの変更がある場合（git dirty）、
+その状態が `logs/run.json` に記録されます。
+
+dirty=true の結果は、
+- 再現性が保証されない可能性がある
+- 論文化・正式成果には適さない場合がある
+
+ことに注意してください。
+
+実行自体は可能ですが、
+判断は人間が行います。
+
+run_exp は、実行時点の git commit と dirty 状態を自動で記録し、
+dirty=true の場合は警告を表示します（実行は停止しません）。
+
+
+
 ## ユーザがすべきこと（v0.1）
 
 **ユーザの仕事は「判断」と「保存」だけ。実行や評価は仕組みに任せる。**
@@ -141,6 +161,17 @@ git describe --tags --dirty --always
 
 👉 **「直接 python / julia を叩かない」だけ守る**
 
+
+
+実行時に生成される `logs/run.json` には、以下が含まれます。
+
+- project commit
+- project dirty（未コミット変更の有無）
+- framework commit（submodule時）
+- framework dirty（将来拡張）
+
+これにより、「この結果はどのコードで出たか」を後から一意に特定できます。
+
 ------
 
 ### ④ 結果を置く
@@ -177,3 +208,125 @@ PASS / REVISE / REJECT / ESCALATE
 
 👉 **責任は明示的に人に残る**
 
+
+
+
+
+------
+
+------
+
+
+
+## 既にあるプロジェクトに適用させる場合
+
+- 新規プロジェクトとして作り直すのではなく、既存プロジェクトを「このフレームワークの型に寄せる」方針
+
+
+
+### STEP 1：現状をそのまま project repo にする（最小）
+
+まずは **既存 ディレクトリをそのまま project repo にする**。
+
+```
+cd project-hoge
+git status   # まず現状確認
+```
+
+- ここでは **構造を変えない**
+- コードも動かさない
+
+👉 **“現場保存”が最優先**
+
+------
+
+### STEP 2：framework を submodule として「後付け」する
+
+```
+git submodule add https://github.com/kenoogl/research-workflow.git framework
+```
+
+これで：
+
+```
+project-hoge/
+├── framework/   ← 追加される
+├── src/         ← これ以降は既存ファイル群
+├── results/
+├── scripts/
+└── ...
+```
+
+👉 **ここではまだ run_exp も hook も使わない**
+
+------
+
+### STEP 3：最低限の3点だけ合わせる
+
+#### ① bin/run_exp を導入（コピーでOK）
+
+```
+cp framework/templates/project/bin/run_exp bin/
+chmod +x bin/run_exp
+```
+
+- 中身は **まだ実行しなくていい**
+- 入口を「1つある」状態にする
+
+------
+
+#### ② logs/run.json を“これから”作り始める
+
+過去の実験は無理に遡らない。
+
+👉 **「今日以降の実行」だけ**：
+
+```
+./bin/run_exp mg_exp_resume
+```
+
+- 実行しなくても run.json が出ればOK
+
+------
+
+#### ③ ai_context を“これから”書き始める
+
+```
+mkdir -p ai_context
+```
+
+最低限これだけ（例）：
+
+```
+# ai_context/atlas_notes.md
+
+## 状態
+- project-hoge は既に baseline / xxxx を実装済み
+- 残差停滞が低周波誤差由来と仮定
+
+## これから
+- restriction/prolongation の設計見直し
+- smoother としての Taylor iteration 再解釈
+```
+
+👉 **過去を完璧に再構築しない**のがコツ。
+
+------
+
+### STEP 4：ここからは「通常運用」に入る
+
+ここから先は、新規プロジェクトと同じ。
+
+- 実行 → run_exp
+- 結果 → results/
+- 評価 → judge_reviews.md
+- 判断 → 人間（あなた）
+
+------
+
+## やらなくていいこと（重要）
+
+❌ 過去の全実験に run.json を付け直す
+ ❌ ディレクトリ構成を全部 templates に合わせる
+ ❌ いきなり hook を有効にする
+ ❌ 既存コードを無理に書き換える
