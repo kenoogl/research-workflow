@@ -1,29 +1,35 @@
-# 15分クイックスタート  
-## ― submodule 前提で、何も考えずに1周回す ―
+# 📘 15分クイックスタート
+
+## ― submodule前提で、AIが賢く見える瞬間まで行く ―
 
 このチュートリアルの目的はただ一つ。
 
-> **「この仕組み、ちゃんと動くな」  
-> と体験的に理解すること**
+> 「この仕組み、AIがちゃんと使えるな」
+> と体験的に理解すること
 
-思想理解・最適設計・正しさは不要です。  
-**手を動かして、1回まわす**ことだけをやります。
+思想の完全理解は不要です。
+**1周回して、AIに渡してみる**ところまでやります。
 
----
+------
 
-## 0. 前提（読むだけ・1分）
+## 0. 前提（1分）
 
 - Git が使える
 - bash が使える
+- `yq` がインストール済み
+
+```bash
+yq --version
+```
+
+エラーが出る場合は README を参照。
+
 - このリポジトリ（research-workflow）を **framework repo** として参照する
+- 実際の作業は、すべて project repo で行います。
 
-👉 **実際の作業は、すべて project repo で行います。**
-
----
+------
 
 ## 1. project repo を作る（2分）
-
-まず、作業用ディレクトリを作ります。
 
 ```bash
 mkdir project-A
@@ -31,201 +37,229 @@ cd project-A
 git init
 ```
 
-ここが **成果物・実験・コードが生まれる場所**です。
+ここが成果物の場所です。
 
-
+------
 
 ## 2. framework を submodule として追加（2分）
 
-~~~
+```bash
 git submodule add https://github.com/kenoogl/research-workflow.git framework
-~~~
+```
 
 結果：
 
-~~~
+```
 project-A/
+├── framework/　# research-workflow（submodule）
 ├── .git/
-├── .gitmodules
-└── framework/        # research-workflow（submodule）
-~~~
+└── .gitmodules
+```
 
+------
 
+## 3. テンプレートをコピー（2分）
 
-## 3. テンプレートを project 側にコピー（2分）
-
-~~~
+```bash
 cp -r framework/templates/project/* .
-~~~
 
-これで、project repo に必要な最小構成が揃います。
-
-~~~
 project-A/
 ├── framework/
 ├── ai_context/
 ├── experiments/
 ├── bin/
-├── src/
 ├── logs/
 ├── results/
-└── README.md
-~~~
+└── src/
+```
 
+------
 
-
-## 4. hook を有効化（1分・任意だが推奨）
+## 4. hook を有効化（任意・1分）
 
 成果物と由来を常にセットで残すため、
  pre-commit hook を有効にします。
 
-~~~
+```bash
 ln -s framework/hooks/pre-commit .git/hooks/pre-commit
-~~~
+```
 
 ※ 失敗しても致命的ではありません（後で設定可）。
 
+------
 
+## 5. 実験設定を作る（1分）
 
-## 5. ダミーの実験設定を書く（1分）
-
-```
-cat experiments/exp_001/config.yaml
-
-name: exp_001
-description: first test run
-parameter_a: 1.0
-parameter_b: 2.0
+```bash
+./bin/new_config exp_001
 ```
 
-意味はありません。
- **存在すればOK**。
+生成される：
 
+```
+experiments/exp_001/config.yaml
+```
 
+中身はひな形です。
+まだ何も計算しません。
+
+------
 
 ## 6. 実行してみる（1分）
 
-~~~
+```bash
 ./bin/run_exp exp_001
-~~~
+```
 
-成功すると：
+生成される：
 
-~~~
-logs/run.json
-~~~
+```
+logs/exp_001.json
+results/exp_001/run_summary.json
+```
 
-が生成されます。
+👉 **ここが重要です。**
 
-👉 **この時点で成功です。**
- まだ何も計算していません。
+まだ solver は動いていませんが、
 
+- 実験定義
+- 実行履歴
+- 比較可能な summary
 
+が自動生成されています。
 
-## 7. ダミー結果を置く（1分）
+------
 
-~~~
-mkdir -p results/exp_001
-echo "dummy result" > results/exp_001/output.txt
-~~~
+## 7. 中身を見てみる（2分）
 
+### logs/exp_001.json
 
+- git commit
+- framework commit
+- config path
+- timestamp
 
-## 8. Git に保存する（2分）
+### results/exp_001/run_summary.json
 
-~~~
+- iterations
+- runtime
+- converged
+- residual
+
+👉 AIが比較できる構造になっています。
+
+------
+
+## 8. AIに渡してみる（3分）
+
+Atlas に次を渡してください：
+
+- `experiments/exp_001/config.yaml`
+- `results/exp_001/run_summary.json`
+
+そして聞いてみる：
+
+> この実験の要約と、次にやるべき最小実験を提案してください。
+
+AIは：
+
+- 要約
+- 仮説生成
+- 追加実験提案
+
+を自然に行います。
+
+ここで初めて、
+
+> AIが「考えている」感じ
+
+を体験できます。
+
+------
+
+## 9. Git に保存（2分）
+
+```bash
 git add .
-git commit -m "exp001: first run"
-~~~
+git commit -m "exp001: first structured run"
+```
 
-- `results/` がある
-- `logs/run.json` がある
+hook が有効なら：
 
-この2つが揃っていれば、
- hook が有効でもコミットは通ります
+- results と logs がセットでないと止まります。
 
+------
 
-
-## 9. ここまでで何が起きたか（読むだけ・2分）
+## 10. ここまでで何が起きたか
 
 あなたは今：
 
-- project repo を作り
-- framework を **参照点として固定**し
-- 実行の由来（run.json）と成果を
-- **機械的にセットで保存**しました
+- 実験条件を固定し
+- 実行履歴を保存し
+- 比較可能な summary を生成し
+- AIが思考可能な形に整えました
 
 まだ：
 
 - 仮説を書いていない
-- LLMを使っていない
-- コードを書いていない
+- 数値計算していない
+- 論文化していない
 
 それでも、
- **「後から使える成果の最小形」**は完成しています。
 
-実行後に生成される `logs/run.json` を開いてみてください。
+> AI思考支援の土台
 
-そこには、
-- どの commit で
-- どの実験を
-- どこに出力したか
+は完成しています。
 
-が自動で記録されています。
+------
 
-この時点で、
-「結果が後から分からなくなる」問題は
-すでに解決されています。
+## 11. 次の一歩
 
+### 実際に solver を動かす
 
+`bin/run_exp` の中に実行コマンドを追加。
 
-## 10. 余力があれば（＋3分）
+### notes.md を作る
 
-### codex_plan.md を1行だけ書く
+```
+experiments/exp_001/notes.md
+```
 
-~~~
-cat ai_context/codex_plan.md
+AIに：
 
-## Objective
-- first test run
-~~~
+- Summary
+- Analysis
+- Next experiment
 
-完璧さは不要です。
+を書かせる。
 
+------
 
+## 12. このフレームワークの本質
 
-## 11. この先に自然につながること
+これは：
 
-- `src/` にコードを書く
-- `run_exp` の最後に実行行を足す
-- Atlas に「この結果どう思う？」と聞く
-- `codex_results.md` を1段落書く
+- 実験管理ツールではありません
+- 自動論文化ツールでもありません
 
-**順番は自由**です。
+これは、
 
+> AIが迷わず思考できる最小構造
 
+を作るための枠組みです。
 
-## 12. まとめ（重要）
+------
 
-この15分でやったことは：
+## まとめ
 
-- 正しい研究ではない
-- 良い実験でもない
+15分で得たもの：
 
-でも、
+- 実験は構造化された
+- AIは比較可能になった
+- 結果は再現可能になった
 
-> **「結果が迷子にならない状態」**
+この3点が揃えば、
 
-は、もう手に入っています。
+仮説生成も論文化も、
+自然に加速します。
 
-それだけで、このワークフローを使う価値は十分です。
-
-
-
-次に読むなら：
-
-- `CONCEPT.md`（なぜこの設計なのか）
-- `README.md`（全体像）
-- project repo の `README.md`（日常運用）
-
-どれも、急ぐ必要はありません。

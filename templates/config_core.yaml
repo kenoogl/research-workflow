@@ -1,0 +1,14 @@
+experiment:
+  name: __EXP_NAME__
+  description: cg without preconditioner
+
+output:
+  results_dir: results/__EXP_NAME__
+  save_residual_history: true
+
+execution:
+  command: >
+    julia --project scripts/run_solver.jl
+    --config experiments/__EXP_NAME__/config.yaml
+
+run:

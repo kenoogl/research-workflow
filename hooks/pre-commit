@@ -1,9 +1,27 @@
 #!/usr/bin/env bash
 set -e
-if git diff --cached --name-only | grep -q '^results/'; then
-  if ! git diff --cached --name-only | grep -q '^logs/run.json$'; then
-    echo "[hook] results/ をコミットするには logs/run.json が必要です"
-    echo "[hook] ./bin/run_exp を通して実行してください"
+
+# staged ファイル一覧取得
+STAGED=$(git diff --cached --name-only)
+
+# results/ に変更があるか？
+RESULT_DIRS=$(echo "$STAGED" | grep '^results/' | cut -d/ -f2 | sort -u || true)
+
+# 変更がなければOK
+if [ -z "$RESULT_DIRS" ]; then
+  exit 0
+fi
+
+# 各実験ディレクトリについてチェック
+for EXP in $RESULT_DIRS; do
+  LOG_FILE="logs/${EXP}.json"
+
+  if ! echo "$STAGED" | grep -q "^${LOG_FILE}$"; then
+    echo "[ERROR] results/${EXP}/ をコミットする場合は ${LOG_FILE} も含めてください"
+    echo "[HINT] ./framework/bin/run_exp ${EXP} を実行してください"
     exit 1
   fi
-fi
+done
+
+exit 0
+

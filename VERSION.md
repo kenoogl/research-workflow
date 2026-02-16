@@ -1,4 +1,4 @@
-v0.1.1
+v0.2
 
 - Minimal reproducible workflow
 - run_exp + run.json

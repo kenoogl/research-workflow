@@ -4,7 +4,7 @@
 
 ## 結論（先に）
 
-> **run_exp は「実験を“起動する”ための薄いラッパー」**
+> **run_exp は「実験を“起動・記録する”ための薄いラッパー」**
 > 問題固有ロジックは一切入れない。
 
 - ❌ ソルバ実装を書かない
@@ -72,86 +72,234 @@ project/
 
 ------
 
+### 正式スキーマ
+
+~~~
+execution:
+  command: <string>          # 必須
+  working_dir: <string>      # 任意
+  timeout: <integer>         # 任意（秒）
+  environment:               # 任意
+    <KEY>: <VALUE>
+~~~
+
+### 1️⃣ 必須フィールド
+
+#### `command`（必須）
+
+#### 型
+
+string
+
+#### 意味
+
+実際に実行されるシェルコマンド。
+
+#### ルール
+
+- **絶対パス禁止**
+- `results/<exp_name>` を必ず出力先に含める
+- config.yaml のパスを含めることを推奨
+
+### 2️⃣ 任意フィールド
+
+#### `working_dir`
+
+#### 型
+
+string
+
+#### 意味
+
+コマンド実行時の作業ディレクトリ。
+
+例：
+
+```
+working_dir: src
+```
+
+run_exp は：
+
+```
+(cd "$working_dir" && bash -c "$command")
+```
+
+で実行。
+
+#### `timeout`
+
+#### 型
+
+integer（秒）
+
+将来拡張用。
+
+例：
+
+```
+timeout: 600
+```
+
+v0.1 では未実装でもよい。
+
+#### `environment`
+
+#### 型
+
+辞書
+
+実行時の環境変数。
+
+例：
+
+```
+environment:
+  JULIA_NUM_THREADS: "8"
+  OMP_NUM_THREADS: "8"
+```
+
+run_exp 側では：
+
+```
+export JULIA_NUM_THREADS=8
+```
+
+してから実行。
+
+
+
 ## run_exp の最小実装（bash）
 
 ```bash
 #!/usr/bin/env bash
 set -euo pipefail
 
-# =========================
-# 0. 引数チェック
-# =========================
+# ============================================
+# 依存チェック
+# ============================================
+if ! command -v yq >/dev/null 2>&1; then
+  echo "[ERROR] yq がインストールされていません。"
+  echo "インストール方法:"
+  echo "  macOS: brew install yq"
+  echo "  Ubuntu: sudo snap install yq"
+  exit 1
+fi
+
+REQUIRED_YQ_MAJOR=4
+INSTALLED_YQ_MAJOR=$(yq --version | awk '{print $NF}' | cut -d. -f1)
+
+if [ "$INSTALLED_YQ_MAJOR" -lt "$REQUIRED_YQ_MAJOR" ]; then
+  echo "[ERROR] yq v4 以上が必要です"
+  exit 1
+fi
+
+
+# ============================================
+# 0. 引数
+# ============================================
 EXP_NAME="${1:-}"
+
 if [ -z "$EXP_NAME" ]; then
-  echo "Usage: ./bin/run_exp <experiment_name>" >&2
+  echo "Usage: ./framework/bin/run_exp <experiment_name>" >&2
   exit 1
 fi
 
 CONFIG="experiments/${EXP_NAME}/config.yaml"
+
+if [ ! -f "$CONFIG" ]; then
+  echo "[ERROR] Config not found: $CONFIG" >&2
+  exit 1
+fi
+
+# ============================================
+# 1. YAML読み取り（yq 必須）
+# ============================================
+if ! command -v yq >/dev/null 2>&1; then
+  echo "[ERROR] yq is required" >&2
+  exit 1
+fi
+
+NAME_IN_CONFIG=$(yq -r '.experiment.name' "$CONFIG")
+RESULTS_IN_CONFIG=$(yq -r '.output.results_dir' "$CONFIG")
+EXEC_CMD=$(yq -r '.execution.command' "$CONFIG")
+
+# ============================================
+# 2. 整合チェック
+# ============================================
+
+if [ "$NAME_IN_CONFIG" != "$EXP_NAME" ]; then
+  echo "[ERROR] experiment.name mismatch"
+  echo "  directory: $EXP_NAME"
+  echo "  config:    $NAME_IN_CONFIG"
+  exit 1
+fi
+
+EXPECTED_RESULTS="results/${EXP_NAME}"
+
+if [ "$RESULTS_IN_CONFIG" != "$EXPECTED_RESULTS" ]; then
+  echo "[ERROR] output.results_dir mismatch"
+  echo "  expected: $EXPECTED_RESULTS"
+  echo "  config:   $RESULTS_IN_CONFIG"
+  exit 1
+fi
+
+if [ -z "$EXEC_CMD" ] || [ "$EXEC_CMD" = "null" ]; then
+  echo "[ERROR] execution.command not defined" >&2
+  exit 1
+fi
+
+# execution.command に exp_name が含まれているか
+if ! echo "$EXEC_CMD" | grep -q "experiments/${EXP_NAME}"; then
+  echo "[ERROR] execution.command does not reference its own config file" >&2
+  exit 1
+fi
+
+if ! echo "$EXEC_CMD" | grep -q "results/${EXP_NAME}"; then
+  echo "[ERROR] execution.command does not reference its own results directory" >&2
+  exit 1
+fi
+
+# ============================================
+# 3. 出力ディレクトリ作成
+# ============================================
 OUTDIR="results/${EXP_NAME}"
 LOGDIR="logs"
 RUN_JSON="${LOGDIR}/run.json"
 
-if [ ! -f "$CONFIG" ]; then
-  echo "[run_exp] Config not found: ${CONFIG}" >&2
-  exit 1
-fi
-
 mkdir -p "$OUTDIR" "$LOGDIR"
 
-# =========================
-# 1. Git 情報（project）
-# =========================
-if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-  PROJECT_COMMIT="$(git rev-parse --short HEAD)"
-  if git diff --quiet && git diff --cached --quiet; then
-    PROJECT_DIRTY=false
-  else
-    PROJECT_DIRTY=true
-  fi
+# ============================================
+# 4. Git情報（project）
+# ============================================
+PROJECT_COMMIT=$(git rev-parse --short HEAD)
+if git diff --quiet && git diff --cached --quiet; then
+  PROJECT_DIRTY=false
 else
-  PROJECT_COMMIT="unknown"
-  PROJECT_DIRTY="unknown"
+  PROJECT_DIRTY=true
+  echo "[WARNING] Project repo dirty=true"
 fi
 
-# =========================
-# 2. Git 情報（framework submodule）
-# =========================
-FRAMEWORK_PATH="framework"
-if [ -d "${FRAMEWORK_PATH}" ] && git -C "${FRAMEWORK_PATH}" rev-parse --git-dir >/dev/null 2>&1; then
-  FRAMEWORK_COMMIT="$(git -C "${FRAMEWORK_PATH}" rev-parse --short HEAD)"
-  if git -C "${FRAMEWORK_PATH}" diff --quiet && git -C "${FRAMEWORK_PATH}" diff --cached --quiet; then
+# ============================================
+# 5. Git情報（framework submodule）
+# ============================================
+FRAMEWORK_COMMIT="none"
+FRAMEWORK_DIRTY="none"
+
+if [ -d "framework/.git" ]; then
+  FRAMEWORK_COMMIT=$(git -C framework rev-parse --short HEAD)
+  if git -C framework diff --quiet && git -C framework diff --cached --quiet; then
     FRAMEWORK_DIRTY=false
   else
     FRAMEWORK_DIRTY=true
+    echo "[WARNING] Framework repo dirty=true"
   fi
-else
-  FRAMEWORK_COMMIT="none"
-  FRAMEWORK_DIRTY="none"
 fi
 
-# =========================
-# 3. WARNING（停止しない）
-# =========================
-if [ "${PROJECT_DIRTY}" = true ]; then
-  echo "[WARNING] Project repo has uncommitted changes (dirty=true)." >&2
-  echo "[WARNING] Results may not be reproducible." >&2
-fi
-
-if [ "${FRAMEWORK_DIRTY}" = true ]; then
-  echo "[WARNING] Framework repo has uncommitted changes (dirty=true)." >&2
-  echo "[WARNING] Methodology version may be ambiguous." >&2
-fi
-
-# =========================
-# 4. 実行コマンド表現
-# =========================
-CMD="./bin/run_exp ${EXP_NAME}"
-
-# =========================
-# 5. run.json 出力（事実のみ）
-# =========================
-cat <<EOF > "${RUN_JSON}"
+# ============================================
+# 6. run.json 出力
+# ============================================
+cat <<EOF > "$RUN_JSON"
 {
   "run_id": "${EXP_NAME}",
   "timestamp": "$(date -Iseconds)",
@@ -164,8 +312,8 @@ cat <<EOF > "${RUN_JSON}"
     "dirty": ${FRAMEWORK_DIRTY}
   },
   "execution": {
-    "entrypoint": "./bin/run_exp",
-    "command": "${CMD}"
+    "entrypoint": "./framework/bin/run_exp",
+    "command": "$(printf '%s' "$EXEC_CMD" | sed 's/"/\\"/g')"
   },
   "inputs": {
     "config": "${CONFIG}"
@@ -176,33 +324,27 @@ cat <<EOF > "${RUN_JSON}"
 }
 EOF
 
-echo "[run_exp] run.json written to ${RUN_JSON}"
+echo "[run_exp] run.json written"
 
-# =========================
-# 6. 実行（問題依存・唯一の可変点）
-# =========================
-# ここだけを各プロジェクトで書き換える
-# 例：Poisson / MG (Julia)
-# julia src/main.jl --config "${CONFIG}" --out "${OUTDIR}"
+# ============================================
+# 7. 実行
+# ============================================
+echo "[run_exp] Executing:"
+echo "$EXEC_CMD"
+bash -c "$EXEC_CMD"
 
-echo "[run_exp] Ready to execute experiment '${EXP_NAME}'"
+echo "[run_exp] Experiment completed: ${EXP_NAME}"
+
 
 ```
 
 ------
 
-## なぜこの形が実験に合うか
 
-### ① “比較軸”を壊さない
-
-- 比較は **config.yaml の差分**
-- run_exp は config を **解釈しない**
-
-👉 MG level / smoother を変えても run_exp は不変。
 
 ------
 
-### ② 数値実験の再現性に必要な情報が揃う
+### 数値実験の再現性に必要な情報が揃う
 
 - 格子サイズ・BC → config.yaml
 - 実装バージョン → project commit
@@ -212,7 +354,7 @@ echo "[run_exp] Ready to execute experiment '${EXP_NAME}'"
 
 ------
 
-### ③ 試行錯誤に強い
+### 試行錯誤に強い
 
 - 実装をいじっても run_exp は変えない
 - 実験を増やしても run_exp は増えない

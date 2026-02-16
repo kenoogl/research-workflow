@@ -8,8 +8,8 @@
 
 ## 
 
-> 1. **意図を書く**（codex_plan.md）
-> 2. **条件を定義**（config.yaml）
+> 1. **研究の意図を書く**（codex_plan.md）
+> 2. **実験条件を定義**（config.yaml）
 > 3. **run_exp で実行**
 > 4. **結果は results/**
 > 5. **事実を書く**（codex_results.md）
@@ -39,11 +39,11 @@ project/
 
 ------
 
-## 1️⃣ 実験の意図を書く（必須・最初）
+## 1️⃣ 研究の意図を書く（必須・最初）
 
 ### 目的
 
-**「なぜこの実験をやるのか」**を失わないため。
+**「なぜこの研究をやるのか」**を失わないため。
 
 ### 書く場所
 
@@ -78,7 +78,7 @@ ai_context/codex_plan.md
 
 ### 目的
 
-**「この実験は何を解いたのか」**を一意にする。
+**「この実験は何を解いたのか」**を一意にするため、`config.yaml`に要件を記述
 
 ### 書く場所
 
@@ -89,6 +89,7 @@ experiments/<exp_name>/config.yaml
 ### exp_name の考え方
 
 - 実験を議論・論文で呼ぶ名前
+- １つの実験について固有の名前をつける
 - 条件が変わったら exp_name を変える
 
 例：
@@ -97,13 +98,23 @@ experiments/<exp_name>/config.yaml
 experiments/mg_2level_h64/config.yaml
 ```
 
-### config.yaml に書くもの
+#### ひな形からコピーを作り、実験に合わせて記述を追加する
 
+~~~
+./bin/newconfig hoge
+~~~
+
+
+
+### [config.yaml に書くもの](./description_of_exp_config.md)
+
+- システムが要求する**コア項目**とユーザが自由に**追加出来る項目**がある
 - 問題定義（PDE / BC / 次元）
 - 離散化条件（格子・レイアウト）
 - アルゴリズム選択（MG / smoother など）
 - 収束条件
 - 出力仕様（results の場所）
+- ...
 
 👉 **Methods に書ける内容だけを書く**
 
@@ -258,7 +269,7 @@ ai_context/atlas_notes.md
 ### コミットするもの
 
 - `experiments/<exp_name>/config.yaml`
-- `logs/run.json`
+- `logs/<exp_name>.json`
 - `results/<exp_name>/`
 - `ai_context/*.md`
 
