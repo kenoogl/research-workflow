@@ -158,7 +158,7 @@ dirty=true の場合は警告を表示します（実行は停止しません）
 
 ### 4. 実験意図を記述（重要・必須）
 
-Codex に何かさせる前に、雑でいいので司令書を書きます。
+AIに何かさせる前に、雑でいいので司令書を書きます。
 
 例（これで十分）：
 
@@ -200,7 +200,7 @@ experiments/exp_001/config.yaml
 ./bin/run_exp exp_001
 ~~~
 
-→ 実験名`"exp_001"`で`logs/run.json` が自動生成されます
+→ 実験名`"exp_001"`で`logs/exp_001.json` が自動生成されます
 （どのコード・設定・commit で実行したかの記録）
 
 [run_expスクリプトの書き方](docs/how2make_run_exp.md)
@@ -230,8 +230,6 @@ JudgeプロセスでAIが評価し、その結果を人が判断する。
 ```bash
 ln -s framework/hooks/pre-commit .git/hooks/pre-commit
 ```
-
-
 
 
 
@@ -283,44 +281,11 @@ ln -s framework/hooks/pre-commit .git/hooks/pre-commit
 
 - システム設計・検証
 
+成果物の形式が違っても、流れと考え方は同じです。
 
-成果物の形式が違っても、
-流れと考え方は同じです。
+このフレームワークは、最初から完璧に使うためのものではありません。
 
-
-
-### 覚えるのはこれだけ
-
-- 考える → Atlas
-
-- 整える → App
-- 動かす → CLI
-
-それ以外は、使いながら分かります。
-
-
-
-### 次に読むもの
-
-- CONCEPT.md
-
-  → なぜこの設計なのか
-
-- docs/quickstart_15min.md
-
-  → 15分で一周回す
-
-- principles.md
-
-  → 設計原則
-
-
-
-このフレームワークは、
-最初から完璧に使うためのものではありません。
-
-まずは 1 実験、1 結果、1 commit。
-そこから自然に広がります。
+まずは 1 実験、1 結果、1 commit。そこから自然に広がります。
 
 
 
