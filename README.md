@@ -1,137 +1,91 @@
-# README.md
 
-# research-workflow
 
-AIによる思考支援のための、ミニマム研究フレームワーク。
+# Research Workflow
+
+## これは何？
+**研究・実験・設計を進めると、  
+結果の由来が自動で残り、  
+論文・提案書の材料が自然に揃う**  
+ためのミニマルな研究ワークフレームワークです。
+
+このリポジトリ（research-workflow）は **フレームワーク本体**であり、  
+実際の研究や実験は **別の project repo** で行います。
+
+> **本フレームワークは、project repo から submodule として利用することを前提**  
+> としています。
+
+LLM（ChatGPT / Codex など）は  
+**相談役・実行補助**として使います。  
+判断と責任は常に **人間** が持ちます。
 
 ---
-
-## 🎯 目的
-
-このフレームワークは、
-
-> 実験を回すたびに  
-> AIが「比較・要約・仮説生成・批判」を自然に行える状態を作る
-
-ことを目的としています。
-
----
-
-## 🧠 [基本思想](CONCEPT.md)
-
-AIが強いのは：
-
-- 比較
-- 要約
-- 論点抽出
-- 反証
-- 代替案生成
-
-AIが弱いのは：
-
-- 条件が曖昧な入力
-- ファイルが散乱している状態
-- 実験の意図が不明な状態
-- 記録が残らないと再利用できない
-
-そのため、本フレームワークは、
-
-**実験結果をAIが扱いやすい形で固定する**という設計を採用しています。
-
-結果として、実験の再現性が担保されます。
-
-
 
 ## このリポジトリの役割（重要）
 
 ### framework repo（このリポジトリ）
-
 - 思想・ルール・安全装置・雛形を提供
 - 実行された成果物は **一切置かない**
+- 方法論として **進化**する
 
 ### project repo（利用者が作る）
-
 - 実際の研究・実験・提案書作成を行う
 - 実験結果・ログ・論文原稿を保持
 - **framework repo を submodule として固定利用**
 
+---
 
+## 何が嬉しい？
+- 「この結果、どのコードで出た？」を考えなくてよくなる
+- 実験・設計の **意図と結果** が自然に残る
+- 論文／提案書／実験制御に同じ流れで使える
+- フレームワーク更新と再現性を **両立**できる
 
 ---
 
-## 🏗 構成（framework repo）
 
-~~~
-research-workflow/
-├── AGENTS.md
-├── CONCEPT.md
-├── README.md  (this document)
-├── VERSION.md
-├── .codexrc
-├── docs/
-│    ├── description_of_exp_config.md
-│    ├── how2make_run_exp.md
-│    ├── how2use_framework.md
-│    ├── quickstart_15min.md
-│
-├── hooks/
-│    └── pre-commit
-└── templates/
-     ├── project/
-     │    ├── ai_context/
-     │    │    ├── intent.md
-     │    │    └── project_notes.md
-     │    ├── bin/
-     │    ├── experiments/
-     │    ├── logs/
-     │    ├── results
-     │    ├── src
-     │    └── README.md
-     ├── config_core.yaml
-     └── notes.md
-~~~
 
-※ framework repo には実験結果は保存しません。
+## 利用の準備
 
----
 
-## 🧩 利用の準備
 
 ### 0. プロジェクトのルートディレクトリを決める
 
-```
+~~~
 (anywhere)
 └── project-A/        ← ★ここが project repo のルート
-```
+~~~
+
+
 
 ### 1. project repo を作る
-
-```
+```bash
 mkdir project-A
 cd project-A
 git init
 ```
 
+
+
 ### 2. framework を submodule として追加
 
-framework を submodule として追加する。
-
-```
+~~~
 git submodule add https://github.com/kenoogl/research-workflow.git framework
-```
+~~~
 
 この時点で
 
-```
+~~~
 project-A/
 ├── .git/
 ├── .gitmodules
 └── framework/        ← framework repo（submodule）
-```
+~~~
+
+
 
 ### 3. テンプレートを project 側にコピー
 
-framework が用意した **project 用ひな形**を**project-A/ の直下にコピー**する。
+framework が用意した **project 用ひな形**を**project-A/ の直下にコピー**する
 
 ~~~
 cp -r framework/templates/project/* .
@@ -141,206 +95,146 @@ cp -r framework/templates/project/* .
 
 ディレクトリ構成は次のようになっている。
 
-```
+~~~
 project-A/            ← cd ここ
-├── .git/
-├── .gitmodules
 ├── framework/        ← submodule（触らない）
 │   └── templates
-│       ├── project
-│       │    └── ...
-│       ├── config_core.yaml
-│       └── notes.md
-│
-├── ai_context/       ← 思考ガイド
-├── bin/
-│    ├── install_hooks
-│    ├── new_config
-│    ├── run_exp
-│    └── run_exp_patterns
+│       └── project
+│           └── ...
+├── ai_context/       ← あなたの思考
+├── bin/run_exp       ← 実行入口
 ├── experiments/      ← 実験定義
 ├── logs/             ← 実行ログ
 ├── results/          ← 成果物
 └── src/              ← コード
-```
-
-##### [git hookを有効にする](hooks/README.md)
-
-~~~
-ln -sf framework/hooks/pre-commit .git/hooks/pre-commit
-chmod +x framework/hooks/pre-commit
 ~~~
 
-この状態を **project repository として確定**し、framework の参照も一緒にコミット
+今の状態を **project repository として確定**し、framework の参照も一緒にコミット
 
-```
+~~~
 git commit -m "add research-workflow framework"
-```
+~~~
 
 これで、どのバージョンのワークフローを使ってプロジェクトを進めているかがわかる。
 
+#### framework のバージョン
 
+- このプロジェクトで利用している framework のバージョンを確認
+  👉 再現性・論文化のときに効く。
 
----
+- プロジェクトのルートディレクトリで
 
-## 🚀 基本フロー
-
-### 1. 実験意図を書く
 
 ~~~
-ai_context/intent.md
+cd framework
+git describe --tags --dirty --always
 ~~~
 
-~~~
-# Intent
+- tag があれば → `v0.1.1`
 
+- tag が無ければ → commit hash
+- 改変があれば → `-dirty`
+
+##### 実行時の注意（重要）
+
+本プロジェクトでは、実行時点で未コミットの変更がある場合（git dirty）、
+その状態が `logs/run.json` に記録されます。
+
+dirty=true の結果は、
+
+- 再現性が保証されない可能性がある
+- 論文化・正式成果には適さない場合がある
+
+ことに注意してください。
+
+実行自体は可能ですが、判断は人間が行います。
+
+run_exp は、実行時点の git commit と dirty 状態を自動で記録し、
+dirty=true の場合は警告を表示します（実行は停止しません）。
+
+
+
+## 使い方
+
+### 4. 実験意図を記述（重要・必須）
+
+Codex に何かさせる前に、雑でいいので司令書を書きます。
+
+例（これで十分）：
+
+~~~
 ## Objective
-- Reference: Asai Asaithambi, Numerical solution of the Burgers’ equation by automatic differentiation,
-  Applied Mathematics and Computation, 216 (2010), 2700–2708.
-- ...
 
-## Goal:
-- To clarify the fundamental convergence characteristics of the Taylor-series-based pseudo-time method for the Poisson equation, including its residual decay behavior and spectral smoothing properties.
-- ...
+- バグ修正
 
-## Success Criteria:
-- Compared with baseline methods, the proposed Taylor-based approaches achieve faster convergence in terms of iteration counts and/or wall-clock time.
-- ...
+## Tasks
 
-## Comparison Baseline:
-- ...
+- indexずれ直す
+
+## Success
+
+- テスト通る
 ~~~
 
-必要に応じて、`project_notes.md`にプロジェクトに関するメモを書く。
+- 完璧さは不要
+
+- 箇条書きでOK
+
+- 後から読めれば十分
 
 
 
-### 2. 実験を定義する（config を作る）
-
-~~~
-./bin/new_config <exp>
-~~~
-
-`config.yaml`がひな形から生成される。また、`notes.md`のコピーが作られる。
+### 5. 実験を定義する
 
 ~~~
-experiments/<exp>/config.yaml
-experiments/<exp>/notes.md
+experiments/exp_001/config.yaml
 ~~~
 
+[config.yamlの例](docs/description_of_exp_config.md)
 
 
-### 3. 実行
 
-`run_exp`は`experiments/<exp>/config.yaml`にある`execution.command`のコマンドを実行する。
-
-~~~
-./bin/run_exp <exp>
-~~~
-
-生成される：
+### 6. 実行する（唯一の入口）
 
 ~~~
-logs/<exp>.json
-results/<exp>/run_summary.json <= solverが生成する
+./bin/run_exp exp_001
 ~~~
 
+→ 実験名`"exp_001"`で`logs/run.json` が自動生成されます
+（どのコード・設定・commit で実行したかの記録）
 
-
-### 4. 後処理
-
-- 必要であれば、後処理などを行い、結果を`results/<exp>/`へ保存
-- 結果のコメントなどは`experiments/<exp>/notes.md`に記述する。
-
-
-
-### 5. AIに渡す
-
-- `intent.md`
-- `config.yaml`
-- `run_summary.json`
-
-AIが：
-
-- 要約
-- 仮説生成
-- 次実験提案
-
-を行い、`notes.md`に追記する。
+[run_expスクリプトの書き方](docs/how2make_run_exp.md)
 
 
 
-### 6. 結果を保存する
+### 7. 結果を保存する
 
-👉 results/ をコミットするには run.json が必須 （git hook が自動でチェックします）
+- 必要であれば、後処理などを行い、結果を`results/exp_001/`へ保存
+- 結果のコメントなどは`codex_results.md`に記述
+
+
+
+### 8. 実験の評価
+
+JudgeプロセスでAIが評価し、その結果を人が判断する。
+
+
+
+### 9. 結果を保存する
+
+👉 results/ をコミットするには run.json が必須
+（git hook が自動でチェックします）
 
 もし hook が効かない場合：
 
-```
+```bash
 ln -s framework/hooks/pre-commit .git/hooks/pre-commit
 ```
 
 
 
----
-
-#### 📊 run_summary.json の役割
-
-AI思考支援の中核です。
-
-最低限含まれるべき項目：
-
-- iterations
-- runtime_sec
-- converged
-- final_residual
-- error_l2
-- error_max
-
-AIが比較可能な「共通キー」を揃えることが重要です。
 
 
-
----
-
-## 🧠 AIとの正しい付き合い方
-
-### AIは
-
-- 思考を拡張する
-- 論点を整理する
-- 批判する
-- 次の可能性を提示する
-
-### 人間は
-
-- 採用する
-- 捨てる
-- 責任を持つ
-
-
-
----
-
-## 🔐 なぜ hook と run_exp があるのか
-
-人は：
-
-- 忘れる
-- 急ぐ
-- 記録を怠る
-
-そのため、
-
-- 実行は run_exp 経由
-- 成果物は results/<exp>/
-- 実行情報は logs/<exp>.json
-
-という **物理的制約** を設けています。
-
-
-
-------
 
 ### 安全について
 
@@ -350,92 +244,83 @@ AIが比較可能な「共通キー」を揃えることが重要です。
 
 - 直接 `python / julia` 実行は禁止（事故防止）
 
-  
+- 再現できない結果は成果として残らない
 
----
+- 成果物と由来は 物理的にセットで管理
 
-## 🧠 このフレームワークの本質
+- これは監視ではなく、研究を続けるための安全装置です。
 
-これは
 
-- 実験管理ツールではありません
-- 自動論文化ツールでもありません
-
-これは、
-
-> AIが思考を拡張しやすい形に実験を固定するための最小構造
-
-です。
 
 ### フレームワークとプロジェクトの関係
 
 #### framework repo
 
 - 参照点・道具箱
+
 - 編集しない（更新は tag / version 切替）
+
 
 #### project repo
 
 - 実践の場
+
 - run_exp や hook は 自由に改変してよい
 
-フレームワークは利用者を縛りません。 再現性のための「基準点」を提供するだけです。
+
+フレームワークは利用者を縛りません。
+再現性のための「基準点」を提供するだけです。
 
 
 
----
+### 向いている用途
 
-## 💡 使いこなすコツ
+- 論文研究
 
-最初は：
+- 提案書作成
 
-- new_config
-- run_exp
-- run_summary.json
+- 数値実験・実験制御
 
-だけ使えば十分です。
-
-Judgeやディベートは後から追加できます。
+- システム設計・検証
 
 
-
----
-
-## 🔄 バージョン管理
-
-各 project repo は
-
-- 特定の framework version を固定
-
-framework は進化しても、
-project の再現性は守られます。
+成果物の形式が違っても、
+流れと考え方は同じです。
 
 
 
----
+### 覚えるのはこれだけ
 
-## 📘 詳細
+- 考える → Atlas
 
-- 設計思想 → `CONCEPT.md`
-- 15分クイックスタート → `docs/quickstart_15min.md`
+- 整える → App
+- 動かす → CLI
+
+それ以外は、使いながら分かります。
 
 
 
----
+### 次に読むもの
 
-## 🎯 最後に
+- CONCEPT.md
 
-このフレームワークは
+  → なぜこの設計なのか
 
-> 研究を速くする魔法ではありません。
+- docs/quickstart_15min.md
 
-しかし、
+  → 15分で一周回す
 
-> 進めた研究が、後から使える形で残る
+- principles.md
 
-確率は大きく上がります。
+  → 設計原則
 
-そして、
 
-AIが本当に役立つのは  この状態になってからです。
+
+このフレームワークは、
+最初から完璧に使うためのものではありません。
+
+まずは 1 実験、1 結果、1 commit。
+そこから自然に広がります。
+
+
 
