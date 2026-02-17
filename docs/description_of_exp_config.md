@@ -14,11 +14,16 @@ execution:
   command: >
   julia --project=. src/main.jl 
   --output-dir results/__EXP_NAME__
+  
+postprocess:
+  commands: []
 ```
 
 - `__EXP_NAME__` は実験名を表し、プレースホルダにする
 - `__DESCRIPTION__` は人のための注釈
 - `execution.command`は例として提示。実際にはユーザのコマンドに置換。
+
+- 後処理があれば、`commands`の配列にコマンド列を追加
 
 - `templates/config_core.yaml`がひな形
 

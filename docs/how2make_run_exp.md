@@ -329,9 +329,23 @@ echo "[run_exp] Executing:"
 echo "$EXEC_CMD"
 bash -c "$EXEC_CMD"
 
+if [ -n "$POSTPROCESS_COMMAND" ]; then
+  POSTPROCESS_COMMANDS=$(printf '%s\n%s' "$POSTPROCESS_COMMANDS" "$POSTPROCESS_COMMAND")
+fi
+
+POSTPROCESS_COUNT=0
+if [ -n "$POSTPROCESS_COMMANDS" ]; then
+  while IFS= read -r POST_CMD; do
+    [ -z "$POST_CMD" ] && continue
+    POSTPROCESS_COUNT=$((POSTPROCESS_COUNT + 1))
+    echo "[run_exp] Postprocess #${POSTPROCESS_COUNT}: ${POST_CMD}"
+    if ! bash -c "$POST_CMD"; then
+      echo "[WARNING] postprocess command failed (continuing): ${POST_CMD}" >&2
+    fi
+  done <<< "$POSTPROCESS_COMMANDS"
+fi
+
 echo "[run_exp] Experiment completed: ${EXP_NAME}"
-
-
 ```
 
 
