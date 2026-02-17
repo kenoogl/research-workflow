@@ -11,4 +11,7 @@ execution:
     julia --project scripts/run_solver.jl
     --config experiments/__EXP_NAME__/config.yaml
 
+postprocess:
+  commands: []
+
 run:
