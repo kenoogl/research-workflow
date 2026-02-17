@@ -1,3 +1,17 @@
+# Role of AI
+
+
+
+## AGENTS.mdへの指示
+
+#### フレームワークでの基本的な振る舞いを書いておく
+
+次の2つをセクションを分けて記述
+
+- フレームワークとしての基本的な挙動
+- コード開発時の挙動
+
+~~~
 # AGENT.md
 
 ## Purpose
@@ -8,18 +22,6 @@ This repository is designed for AI-assisted research analysis.
 - run_summary.json contains results only.
 - Do not modify results files.
 - Separate facts from evaluation.
-
----
-
-### Project-Local Skill Policy
-
-- This project uses local skills under:
-  - `.codex/skills/`
-- For notes update workflows, prioritize:
-  - `.codex/skills/notes-updater/SKILL.md`
-- If both global and project-local skills exist, prefer project-local skills.
-- Do not use global skill variants for this project unless explicitly requested.
-- If the project-local skill file is missing or broken, report it and fall back to AGENTS.md rules.
 
 ---
 
@@ -61,8 +63,6 @@ This repository is designed for AI-assisted research analysis.
   - `## 3. Human Thoughts (Decision)`
 - Keep output language Japanese.
 - If section markers are missing or broken, stop and report an error. Do not rewrite whole file.
-
-
 
 ---
 
@@ -123,3 +123,122 @@ Follow the Kiro workflow described in `GEMINI.md`. Specs move through requiremen
 ## When Both Apply
 - Never alter experimental results to fix code.
 - Code fixes require new experiment runs.
+
+~~~
+
+
+
+## notes.mdの作成方法についての指示
+
+- AIが結果を基に文書を生成する。
+- CLIやcodex appで書かせるのが柔軟でよい。
+- その仕組みについては、AGENT.mdとスキルを使う2種類の実装
+
+
+
+### AGENTS.mdに指示を書いておくやり方
+
+#### `AGENTS.md` に書く  
+
+- **常に守る運用ルール**  
+- 例: 「`generate_notes --llm-internal` のときは section 1/2 のみ更新、section 3 は不変」
+- 効果: 毎回の説明コストを減らせる
+
+
+
+### スキル化する  
+
+- **手順化された反復作業**
+- 例: `notes-updater` スキルを作って、`intent/config/summary` を読んで `notes.md` の 1/2 節だけ更新するワークフローを固定
+- 効果: 実行の一貫性が上がる、プロンプトを短くできる
+
+
+
+### 実務推奨:
+
+1. `AGENTS.md` に最小ルール（更新範囲・禁止事項）を書く  
+2. 実作業はスキルに寄せる  
+
+
+
+#### AGENTS.md に下記を追記
+
+```md
+### Notes Update Rule (generate_notes internal)
+- When `./bin/generate_notes <exp> --llm-internal` is used, read only:
+  - `ai_context/intent.md` (if exists)
+  - `experiments/<exp>/config.yaml`
+  - `results/<exp>/run_summary.json`
+- Ensure `experiments/<exp>/notes.md` header matches the experiment name:
+  - `# Experiment Notes: <exp>`
+  - Never leave placeholder text like `<exp>`.
+- Update only `experiments/<exp>/notes.md`:
+  - `## 1. AI Summary (Facts)`
+  - `## 2. AI Analysis (Evaluation)`
+- Never modify:
+  - `## 3. Human Thoughts (Decision)`
+- Keep output language Japanese.
+- If section markers are missing or broken, stop and report an error. Do not rewrite whole file.
+```
+
+##### 使い方：プロンプトを次のように。（）内は念のため。
+
+~~~
+AGENTS.md準拠で、sor_n16_omega1.5 の notes.md を更新。（section 1/2 のみ、section 3 は保持。）
+~~~
+
+
+
+#### スキル案（notes-updater）
+
+- 名前: `notes-updater`
+- 目的: `--llm-internal` 実行後の定型更新を短指示で実行
+- 入力: `<exp_name>`
+- 動作:
+  1. `intent/config/run_summary` を読む
+  2. `notes.md` の section 1/2 を生成
+  3. section 3 を保持したまま置換
+  4. 構造不整合なら停止して報告
+
+
+
+##### `AGENTS.md`に`SKILL.md`の利用を明記
+
+~~~
+### Project-Local Skill Policy
+
+- This project uses local skills under:
+  - `.codex/skills/`
+- For notes update workflows, prioritize:
+  - `.codex/skills/notes-updater/SKILL.md`
+- If both global and project-local skills exist, prefer project-local skills.
+- Do not use global skill variants for this project unless explicitly requested.
+- If the project-local skill file is missing or broken, report it and fall back to AGENTS.md rules.
+~~~
+
+##### ファイルの配置
+
+~~~
+`.codex/skills/notes-updater/SKILL.md`
+~~~
+
+##### スキル運用:
+
+「`$notes-updater sor_n16_omega1.5` 実行」
+
+
+
+
+
+
+
+## 複数実験同時比較モード
+
+複数の `run_summary.json` を同時にAIに渡し、
+横断的に比較・順位付け・傾向抽出により仮説生成と戦略設計をさせるモード
+
+- 複数の実験を一瞬で俯瞰
+- 傾向検出
+- 最適候補抽出
+- 外れ値検出
+- 非線形挙動検出

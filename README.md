@@ -64,20 +64,23 @@ AIが弱いのは：
 ~~~
 research-workflow/
 ├── AGENTS.md
-├── CONCEPT.md
 ├── README.md  (this document)
 ├── VERSION.md
-├── .codexrc
+├── setup.sh
 ├── docs/
+│    ├── CONCEPT.md
 │    ├── description_of_exp_config.md
 │    ├── how2make_run_exp.md
-│    ├── how2use_framework.md
-│    ├── quickstart_15min.md
-│
+│    ├── roleAI.md
+│    └── spec_generate_notes.md
 ├── hooks/
-│    └── pre-commit
+│    ├── pre-commit
+│    └── README.md
 └── templates/
      ├── project/
+     │    ├── SKILLS/
+     │    │    └── note_updater/
+     │    │         └── SKILL.md
      │    ├── ai_context/
      │    │    ├── intent.md
      │    │    └── project_notes.md
@@ -85,8 +88,8 @@ research-workflow/
      │    ├── experiments/
      │    ├── logs/
      │    ├── results
-     │    ├── src
-     │    └── README.md
+     │    └── src
+     ├── codexrc
      ├── config_core.yaml
      └── notes.md
 ~~~
@@ -116,7 +119,7 @@ yq --version
 
 ```
 (anywhere)
-└── project-A/        ← ★ここが project repo のルート
+ └── project-A/        ← ★ここが project repo のルート
 ```
 
 ### 1. project repo を作る
@@ -144,13 +147,21 @@ project-A/
 └── framework/        ← framework repo（submodule）
 ```
 
-### 3. テンプレートを project 側にコピー
-
-framework が用意した **project 用ひな形**を**project-A/ の直下にコピー**する。
+### 3. 初期設定
 
 ~~~
-cp -r framework/templates/project/* .
+framework/setup.sh
 ~~~
+
+これにより、
+
+- `framework/templates/project/*` を project ルートへコピー
+- `framework/templates/codexrc` を `.codexrc` として配置
+- `framework/AGENTS.md` を `AGENTS.md` として配置
+- `framework/hooks/pre-commit` を `.git/hooks/pre-commit` にシンボリックリンクし、実行権限を付与
+- `.codex/skills/notes-updater/SKILL.md` を作成し、テンプレートの `SKILL.md` をコピー
+
+
 
 以降、project repo 側で作業します。
 
@@ -160,6 +171,7 @@ cp -r framework/templates/project/* .
 project-A/            ← cd ここ
 ├── .git/
 ├── .gitmodules
+├── .codexrc
 ├── framework/        ← submodule（触らない）
 │   └── templates
 │       ├── project
@@ -169,7 +181,7 @@ project-A/            ← cd ここ
 │
 ├── ai_context/       ← 思考ガイド
 ├── bin/
-│    ├── install_hooks
+│    ├── generate_notes
 │    ├── new_config
 │    ├── run_exp
 │    └── run_exp_patterns
@@ -178,13 +190,6 @@ project-A/            ← cd ここ
 ├── results/          ← 成果物
 └── src/              ← コード
 ```
-
-##### [git hookを有効にする](hooks/README.md)
-
-~~~
-ln -sf framework/hooks/pre-commit .git/hooks/pre-commit
-chmod +x framework/hooks/pre-commit
-~~~
 
 この状態を **project repository として確定**し、framework の参照も一緒にコミット
 
@@ -335,7 +340,7 @@ AIが比較可能な「共通キー」を揃えることが重要です。
 
 
 
-### 5. 実験ノート作成
+### 5. [実験ノート作成](docs/spec_generate_notes.md)
 
 AIが`intent.md`、`config.yaml`、`run_summary.json`から
 
@@ -345,9 +350,35 @@ AIが`intent.md`、`config.yaml`、`run_summary.json`から
 
 を行い、`notes.md`に追記する。
 
-人は評価・コメントを記述する。
+AIへの依頼は下記コマンドでトリガーをかける。３つのモードがあるが、ここでは`internal`モードとcodex appでの利用法を説明。
 
-> ターミナルで実行するCLIやディレクトリを直接操作できるLLMの場合には、必要なファイルを参照させて、要約・仮説生成・次実験提案を依頼。ブラウザの場合には、ファイルの内容をコピペして作業を依頼。結果をファイルにコピペして戻す。
+~~~
+bin/generate_notes <exp_name> [MODE] [OPTIONS]
+~~~
+
+| モード            | 用途                  | LLM呼び出し |
+| ----------------- | --------------------- | ----------- |
+| `--stdout-prompt` | 人間が外部LLMに貼る   | ❌ 呼ばない  |
+| `--llm-external`  | bashからLLM CLIを呼ぶ | ✅ 呼ぶ      |
+| `--llm-internal`  | 既にLLM CLI内         | ❌ 呼ばない  |
+
+#### LLMを用いる方法
+
+`generate_notes`コマンドを使う方法もあるが、ここではLLMに依頼する方法を説明（CLIとcodex appn両方で利用可能）
+
+#####  AGENTS.mdのルールを利用する場合、次のプロンプト
+
+~~~
+AGENTS.md準拠で、sor_n16_omega1.5 の notes.md を更新
+~~~
+
+##### SKILLを利用する場合、次のプロンプト
+
+~~~
+$notes-updater sor_n16_omega1.4 実行
+~~~
+
+##### 人は評価・コメントを記述する。
 
 
 

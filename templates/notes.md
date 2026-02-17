@@ -1,39 +1,53 @@
 # Experiment Notes: <exp>
 
+
+
 ---
 
+
+
 ## 1. AI Summary (Facts)
-### Run Overview
 
+（ここにAIが書く）
 
-### Observed Behavior
-
-
-##### ※ ここでは解釈しない。run_summary.json の内容を整理するのみ。
+※ ここでは解釈しない。run_summary.json の内容を整理するのみ。
 
 
 
-## 2. AI Analysis (Evaluation)
+---
+
+
+
+## AI Analysis (Evaluation)
+（ここにAIが書く）
+
 ### Alignment with Intent
+
 
 
 ### Hypotheses 仮説候補
 
 
+
 ### Counterarguments 他実験との比較
+
 
 
 ### Minimal Next Experiment 次実験提案
 
 
+
+
 ---
 
+
+
 ## 3. Human Thoughts (Decision)
-(手書き)
+
+（ここは人間が書く）
 - 採用 / 保留 / 却下
 - なぜそう判断したか
 - 次の実験名
 - 気になる点
-- 投資するかどうか
 
 ---
