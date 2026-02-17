@@ -38,11 +38,11 @@ AIが弱いのは：
 
 **実験結果をAIが扱いやすい形で固定する**という設計を採用しています。
 
-結果として、実験の再現性が担保されます。
+結果として、プロベナンスが担保され、実験の再現性が高められます。
 
 
 
-## このリポジトリの役割（重要）
+## このリポジトリの役割
 
 ### framework repo（このリポジトリ）
 
@@ -250,7 +250,7 @@ ai_context/intent.md
 
 
 
-### 2. 実験を定義する（config を作る）
+### 2. 実験を定義する（[config の書き方](docs/description_of_exp_config.md)）
 
 ~~~
 ./bin/new_config <exp>
@@ -263,9 +263,17 @@ experiments/<exp>/config.yaml
 experiments/<exp>/notes.md
 ~~~
 
+- 「この実験は何を解いたのか」を一意にするため、要件を記述
 
+- ##### 実験名`<exp>`の考え方
 
-### 3. 実行
+  - 実験を議論・論文で呼ぶ名前
+  - １つの実験について固有の名前をつける
+  - 条件が変わったら exp_name を変える
+
+  
+
+### 3. [run_exp](docs/how2make_run_exp.md)による実行
 
 `run_exp`は`experiments/<exp>/config.yaml`にある`execution.command`のコマンドを実行する。
 
@@ -273,51 +281,12 @@ experiments/<exp>/notes.md
 ./bin/run_exp <exp>
 ~~~
 
-生成される：
+生成されるファイル：
 
 ~~~
 logs/<exp>.json
 results/<exp>/run_summary.json <= solverが生成する
 ~~~
-
-
-
-### 4. 後処理
-
-- 必要であれば、後処理などを行い、結果を`results/<exp>/`へ保存
-- 結果のコメントなどは`experiments/<exp>/notes.md`に記述する。
-
-
-
-### 5. AIに渡す
-
-- `intent.md`
-- `config.yaml`
-- `run_summary.json`
-
-AIが：
-
-- 要約
-- 仮説生成
-- 次実験提案
-
-を行い、`notes.md`に追記する。
-
-
-
-### 6. 結果を保存する
-
-👉 results/ をコミットするには run.json が必須 （git hook が自動でチェックします）
-
-もし hook が効かない場合：
-
-```
-ln -s framework/hooks/pre-commit .git/hooks/pre-commit
-```
-
-
-
----
 
 #### 📊 run_summary.json の役割
 
@@ -336,22 +305,43 @@ AIが比較可能な「共通キー」を揃えることが重要です。
 
 
 
----
+### 4. 後処理
 
-## 🧠 AIとの正しい付き合い方
+- 必要であれば、後処理などを行い、結果を`results/<exp>/`へ保存
+- 結果のコメントなどは`experiments/<exp>/notes.md`に記述する。
 
-### AIは
 
-- 思考を拡張する
-- 論点を整理する
-- 批判する
-- 次の可能性を提示する
 
-### 人間は
+### 5. 実験ノート作成
 
-- 採用する
-- 捨てる
-- 責任を持つ
+AIが`intent.md`、`config.yaml`、`run_summary.json`から
+
+- 要約
+- 仮説生成
+- 次実験提案
+
+を行い、`notes.md`に追記する。
+
+人は評価・コメントを記述する。
+
+
+
+### 6. 結果を保存する
+
+👉 results/ をコミットするには run.json が必須 （git hook が自動でチェックします）
+
+もし hook が効かない場合：
+
+```
+ln -s framework/hooks/pre-commit .git/hooks/pre-commit
+```
+
+#### コミットタイミングの原則
+
+> **「判断が終わったら commit」**
+
+- 実行直後ではない
+- 評価と判断が揃った時点
 
 
 
@@ -374,6 +364,22 @@ AIが比較可能な「共通キー」を揃えることが重要です。
 という **物理的制約** を設けています。
 
 
+
+## 補足
+
+### 🔹 dirty=true の扱い
+
+- 実行は可能
+- run.json に必ず記録
+- Judge は原則 REVISE / ESCALATE
+
+### 🔹 同じ exp_name の再実行
+
+- run.json は上書き
+
+- 意味が変わるなら exp_name を変える
+
+  
 
 ------
 

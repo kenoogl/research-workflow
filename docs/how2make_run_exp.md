@@ -1,9 +1,5 @@
 # bin/run_expスクリプトの作り方
 
-------
-
-## 結論（先に）
-
 > **run_exp は「実験を“起動・記録する”ための薄いラッパー」**
 > 問題固有ロジックは一切入れない。
 
@@ -11,26 +7,26 @@
 - ❌ パラメータを解釈しない
 - ❌ 結果を評価しない
 
-👉 **run_exp の責務は 3 つだけ**。
+
 
 ------
 
-## run_exp の3つの責務（固定）
+## run_exp の3つの役割
 
-### ① 実験を一意に同定する
+#### ① 実験を一意に同定する
 
 - exp_name
 - config.yaml
 - 出力ディレクトリ
 
-### ② 実行の“事実”を run.json に記録する
+#### ② 実行の“事実”を run.json に記録する
 
 - project commit
 - framework commit
 - 実行コマンド
 - config の所在
 
-### ③ 実行を「1点」に集約する
+#### ③ 実行を「1点」に集約する
 
 - python / julia / MPI を **直接叩かせない**
 - run_exp を唯一の入口にする
@@ -49,7 +45,7 @@ bin/run_exp
     └─ 問題固有ランナーを呼ぶ（1行）
 ```
 
-👉 **問題固有なのは最後の1行だけ**
+
 
 ------
 
@@ -338,8 +334,6 @@ echo "[run_exp] Experiment completed: ${EXP_NAME}"
 
 ```
 
-------
-
 
 
 ------
@@ -352,6 +346,8 @@ echo "[run_exp] Experiment completed: ${EXP_NAME}"
 
 👉 **論文で必要な provenance が自動で揃う**
 
+
+
 ------
 
 ### 試行錯誤に強い
@@ -361,27 +357,13 @@ echo "[run_exp] Experiment completed: ${EXP_NAME}"
 
 👉 **run_exp が安定点になる**
 
-------
 
-## 実行結果とコードバージョンについて
-
-本プロジェクトでは、すべての実行結果は  
-**どのソースコードで生成されたか**を必ず記録します。
-
-実行時に生成される `logs/run.json` には、以下が含まれます。
-
-- project repo の git commit
-- framework（submodule）の git commit
-- dirty state（未コミット変更の有無）
-
-これにより、
-「この結果はどのコードで出たか」を後から一意に特定できます。
 
 ------
 
 ## よくある NG 実装（やらない）
 
-### ❌ config を parse して条件分岐
+#### ❌ config を parse して条件分岐
 
 ```bash
 if smoother == taylor; then ...
@@ -391,7 +373,7 @@ if smoother == taylor; then ...
 
 ------
 
-### ❌ 複数実験をループで回す
+#### ❌ 複数実験をループで回す
 
 ```bash
 for exp in exp1 exp2 exp3; do ...
@@ -401,56 +383,10 @@ for exp in exp1 exp2 exp3; do ...
 
 ------
 
-### ❌ 評価を書く
+#### ❌ 評価を書く
 
 ```bash
 echo "looks converged" >> results
 ```
 
 → **Judge の仕事**
-
-------
-
-## run_exp と他ファイルの関係（再確認）
-
-| ファイル         | 役割               |
-| ---------------- | ------------------ |
-| run_exp          | 実行入口・事実記録 |
-| config.yaml      | 実験条件           |
-| main.jl          | Poisson/MG 実装    |
-| run.json         | 実行台帳           |
-| codex_results.md | 結果要約           |
-| judge_reviews.md | 評価・分岐         |
-
-------
-
-## 最短ルール（覚える用）
-
-> **run_exp は
-> config を渡して、
-> run.json を書いて、
-> solver を1回呼ぶだけ**
-
-それ以上やりたくなったら、
-**それは run_exp の責務じゃない**。
-
-
-
-------
-
-## run.json 仕様
-
-### project.commit
-
-実行時点の project repo の git commit hash。
-この値が同一であれば、ソースコードは同一であることを保証する。
-
-### project.dirty
-
-未コミットの変更が存在する場合は true。
-再現性に注意が必要であることを示す。
-
-### framework.commit
-
-利用している framework（submodule）の git commit hash。
-方法論・運用ルールのバージョンを特定するために用いる。
