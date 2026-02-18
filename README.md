@@ -160,6 +160,7 @@ framework/setup.sh
 - `framework/AGENTS.md` を `AGENTS.md` として配置
 - `framework/hooks/pre-commit` を `.git/hooks/pre-commit` にシンボリックリンクし、実行権限を付与
 - `.codex/skills/notes-updater/SKILL.md` を作成し、テンプレートの `SKILL.md` をコピー
+- 以上の処理が終了後、`framework`ディレクトリは読み出しのみに許可権を変更。
 
 
 
