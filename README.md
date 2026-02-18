@@ -365,15 +365,15 @@ bin/generate_notes <exp_name> [MODE] [OPTIONS]
 
 #### LLMを用いる方法
 
-`generate_notes`コマンドを使う方法もあるが、ここではLLMに依頼する方法を説明（CLIとcodex appn両方で利用可能）
+`generate_notes`コマンドを使う方法もあるが、ここではLLMに依頼する方法を説明
 
-#####  AGENTS.mdのルールを利用する場合、次のプロンプト
+#####  AGENTS.mdのルールを利用する場合、次のプロンプト（CLIとcodex appn両方で利用可能）
 
 ~~~
 AGENTS.md準拠で、sor_n16_omega1.5 の notes.md を更新
 ~~~
 
-##### SKILLを利用する場合、次のプロンプト
+##### SKILLを利用する場合、次のプロンプト（CLIのみ）
 
 ~~~
 $notes-updater sor_n16_omega1.4 実行
