@@ -25,5 +25,6 @@ else
 fi
 
 cp "${src_file}" "${dest_file}"
+chmod -R a-w framework
 
-echo "Setup completed: project template copied, hooks installed, and ${dest_file} copied."
+echo "Setup completed: project template copied, hooks installed, ${dest_file} copied, and framework set to read-only."

@@ -1,3 +1,10 @@
+---
+name: notes-updater
+description: Update experiments/<exp>/notes.md for experiment analysis while preserving human decisions.
+metadata:
+  short-description: Update experiment notes sections 1 and 2 safely
+---
+
 # notes-updater
 
 ## Purpose
