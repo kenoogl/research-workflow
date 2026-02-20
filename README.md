@@ -183,7 +183,7 @@ project-A/            ← cd ここ
 ├── ai_context/       ← 思考ガイド
 ├── bin/
 │    ├── generate_notes
-│    ├── new_config
+│    ├── new_exp
 │    ├── run_exp
 │    └── run_exp_patterns
 ├── experiments/      ← 実験定義
@@ -274,7 +274,7 @@ ai_context/intent.md
 ### 2. 実験を定義する（[config の書き方](docs/description_of_exp_config.md)）
 
 ~~~
-./bin/new_config <exp>
+./bin/new_exp <exp>
 ~~~
 
 `config.yaml`がひな形から生成される。また、`notes.md`のコピーが作られる。

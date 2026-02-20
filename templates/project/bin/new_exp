@@ -4,7 +4,7 @@ set -euo pipefail
 EXP_NAME="${1:-}"
 
 if [ -z "$EXP_NAME" ]; then
-  echo "Usage: ./bin/new_config <experiment_name>" >&2
+  echo "Usage: ./bin/new_exp <experiment_name>" >&2
   exit 1
 fi
 
@@ -18,22 +18,22 @@ CONFIG_PATH="${EXP_DIR}/config.yaml"
 NOTES_PATH="${EXP_DIR}/notes.md"
 
 if [ -f "$CONFIG_PATH" ]; then
-  echo "[new_config] config already exists: $CONFIG_PATH" >&2
+  echo "[new_exp] config already exists: $CONFIG_PATH" >&2
   exit 1
 fi
 
 if [ -f "$NOTES_PATH" ]; then
-  echo "[new_config] notes already exists: $NOTES_PATH" >&2
+  echo "[new_exp] notes already exists: $NOTES_PATH" >&2
   exit 1
 fi
 
 if [ ! -f "$TEMPLATE_PATH" ]; then
-  echo "[new_config] template not found: $TEMPLATE_PATH" >&2
+  echo "[new_exp] template not found: $TEMPLATE_PATH" >&2
   exit 1
 fi
 
 if [ ! -f "$NOTES_TEMPLATE_PATH" ]; then
-  echo "[new_config] template not found: $NOTES_TEMPLATE_PATH" >&2
+  echo "[new_exp] template not found: $NOTES_TEMPLATE_PATH" >&2
   exit 1
 fi
 
@@ -43,5 +43,5 @@ sed "s/__EXP_NAME__/${EXP_NAME}/g" \
     "$TEMPLATE_PATH" > "$CONFIG_PATH"
 cp "$NOTES_TEMPLATE_PATH" "$NOTES_PATH"
 
-echo "[new_config] Created: $CONFIG_PATH"
-echo "[new_config] Created: $NOTES_PATH"
+echo "[new_exp] Created: $CONFIG_PATH"
+echo "[new_exp] Created: $NOTES_PATH"

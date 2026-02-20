@@ -27,12 +27,12 @@ postprocess:
 
 - `templates/config_core.yaml`がひな形
 
-#### `bin/new_config`
+#### `bin/new_exp`
 
 - コマンドで実験用のベースconfigを生成
 
 ~~~
-./bin/new_config mg_baseline
+./bin/new_exp mg_baseline
 ~~~
 
 次のディレクトリに生成される
