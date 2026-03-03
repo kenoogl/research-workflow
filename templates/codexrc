@@ -20,7 +20,7 @@ execution:
   warn_if_dirty: true
 
   require_run_metadata: true
-  run_metadata_path: logs/run.json
+  run_metadata_path: logs/<exp>.json
 
   forbid_direct_execution:
     - python

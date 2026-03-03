@@ -1,0 +1,76 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+usage() {
+  echo "Usage: ./bin/new_analysis <analysis_name>"
+  echo "Allowed: letters, numbers, dot, underscore, hyphen"
+}
+
+ANA="${1:-}"
+if [ -z "$ANA" ]; then
+  usage
+  exit 1
+fi
+
+# Prevent path traversal / JSON breakage via simple allow-list.
+if ! [[ "$ANA" =~ ^[A-Za-z0-9._-]+$ ]]; then
+  echo "Error: invalid analysis name '$ANA'"
+  usage
+  exit 1
+fi
+
+BASE="analysis/$ANA"
+if [ -e "$BASE" ]; then
+  echo "Error: analysis '$ANA' already exists."
+  exit 1
+fi
+
+echo "Creating analysis: $ANA"
+
+mkdir -p "$BASE/events"
+
+DATE_UTC="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+DATE_LOCAL="$(date +"%Y-%m-%d")"
+
+cat > "$BASE/meta.json" <<EOF_META
+{
+  "analysis_name": "$ANA",
+  "created_at": "$DATE_UTC",
+  "analysis_type": "manual",
+  "experiments": []
+}
+EOF_META
+
+cat > "$BASE/discussion.md" <<EOF_DISCUSSION
+# Analysis: $ANA
+
+---
+
+## Objective (Initial)
+
+- 
+
+---
+
+## Session 1 ($DATE_LOCAL)
+
+### AI Summary
+- Facts only
+
+### AI Analysis
+- Alignment with objective:
+- Hypothesis candidates:
+- Counterarguments:
+- Minimal next experiment:
+
+### Human Notes
+- 
+EOF_DISCUSSION
+
+echo "Analysis structure created at: $BASE"
+echo "Next step:"
+echo "  1. Edit discussion.md to define Objective"
+echo "  2. Record each interaction:"
+echo "     - events/001_prompt.md"
+echo "     - events/001_response.md"

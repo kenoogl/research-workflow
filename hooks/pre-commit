@@ -18,10 +18,9 @@ for EXP in $RESULT_DIRS; do
 
   if ! echo "$STAGED" | grep -q "^${LOG_FILE}$"; then
     echo "[ERROR] results/${EXP}/ をコミットする場合は ${LOG_FILE} も含めてください"
-    echo "[HINT] ./framework/bin/run_exp ${EXP} を実行してください"
+    echo "[HINT] ./bin/run_exp ${EXP} を実行してください"
     exit 1
   fi
 done
 
 exit 0
-

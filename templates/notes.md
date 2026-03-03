@@ -18,7 +18,7 @@
 
 
 
-## AI Analysis (Evaluation)
+## 2. AI Analysis (Evaluation)
 （ここにAIが書く）
 
 ### Alignment with Intent

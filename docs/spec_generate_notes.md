@@ -52,7 +52,7 @@ results/<exp>/run_summary.json
 | `--llm-internal`    | 内部LLMセッション用                      |
 | `--llm-cmd "<cmd>"` | LLMコマンド指定                          |
 | `--dry-run`         | 書き込みなし                             |
-| `--force`           | notes.md無ければ生成                     |
+| `--force`           | notes.md テンプレートを再作成（既存でも上書き） |
 | `--backup`          | 更新前にバックアップ作成（デフォルトON） |
 
 ------
@@ -70,7 +70,7 @@ results/<exp>/run_summary.json
 
 ## Step 2: notes.md 準備
 
-無ければテンプレ生成：
+通常は無ければテンプレ生成。`--force` 指定時は既存でも再作成：
 
 ```
 experiments/<exp>/notes.md
@@ -122,8 +122,11 @@ experiments/<exp>/notes.md
 2. 外部LLM呼び出し
 
    ```
-   OUTPUT=$(echo "$PROMPT" | $LLM_CMD)
+   OUTPUT=$(printf "%s\n" "$PROMPT" | bash -lc "$LLM_CMD")
    ```
+
+   補足:
+   - `LLM_CMD` に `codex run` が含まれる場合、`codex exec` に自動置換して非対話実行する。
 
 3. 出力検証
 
@@ -136,7 +139,7 @@ experiments/<exp>/notes.md
 
 5. Human Thoughts保持
 
-6. バックアップ作成
+6. バックアップ作成（`notes.md` が既存のとき）
 
 7. 完了メッセージ
 
@@ -161,7 +164,7 @@ experiments/<exp>/notes.md
    Only replace sections 1 and 2.
    ```
 
-3. LLMが直接notes.md編集
+3. generate_notes はここで終了（notes.md は変更しない）
 
 ### generate_notesはここで終了
 
@@ -213,7 +216,7 @@ LLM出力に：
 notes.md.bak.<timestamp>
 ```
 
-必ず作成。
+`BACKUP=true` かつ `notes.md` が既存の場合に作成。
 
 ------
 
@@ -422,20 +425,20 @@ generate_notes exp --stdout-prompt
 
 
 
-以降はV2のときの使い方
+以降は実装準拠の具体例
 
 ## **現実に使える具体例**
 
 前提：
 
 ```
-./bin/generate_notes <exp_name> --llm
+./bin/generate_notes <exp_name> --llm-external
 ```
 
 は内部で：
 
 ```
-echo "$PROMPT" | $RW_LLM_CMD
+printf "%s\n" "$PROMPT" | bash -lc "$RW_LLM_CMD"
 ```
 
 を実行する設計。
@@ -453,7 +456,7 @@ export RW_LLM_CMD="codex run"
 または直接：
 
 ```bash
-./bin/generate_notes exp_001 --llm --llm-cmd "codex run"
+./bin/generate_notes exp_001 --llm-external --llm-cmd "codex run"
 ```
 
 ------
@@ -467,14 +470,14 @@ export RW_LLM_CMD="codex run"
 ### パターンA（標準）
 
 ```bash
-./bin/generate_notes exp_001 --llm --llm-cmd "codex run"
+./bin/generate_notes exp_001 --llm-external --llm-cmd "codex run"
 ```
 
 または：
 
 ```bash
 export RW_LLM_CMD="codex run"
-./bin/generate_notes exp_001 --llm
+./bin/generate_notes exp_001 --llm-external
 ```
 
 ------
@@ -482,7 +485,7 @@ export RW_LLM_CMD="codex run"
 ### パターンB（モデル指定）
 
 ```bash
-./bin/generate_notes exp_001 --llm \
+./bin/generate_notes exp_001 --llm-external \
   --llm-cmd "codex run --model gpt-4.1"
 ```
 
@@ -491,7 +494,7 @@ export RW_LLM_CMD="codex run"
 ### パターンC（低温度・安定出力）
 
 ```bash
-./bin/generate_notes exp_001 --llm \
+./bin/generate_notes exp_001 --llm-external \
   --llm-cmd "codex run --temperature 0.2"
 ```
 
@@ -502,14 +505,14 @@ export RW_LLM_CMD="codex run"
 （例：anthropic CLI がある場合）
 
 ```bash
-./bin/generate_notes exp_001 --llm \
+./bin/generate_notes exp_001 --llm-external \
   --llm-cmd "claude"
 ```
 
 モデル指定：
 
 ```bash
-./bin/generate_notes exp_001 --llm \
+./bin/generate_notes exp_001 --llm-external \
   --llm-cmd "claude --model claude-3-opus"
 ```
 
@@ -518,7 +521,7 @@ export RW_LLM_CMD="codex run"
 # 3️⃣ OpenAI CLI（仮想例）
 
 ```bash
-./bin/generate_notes exp_001 --llm \
+./bin/generate_notes exp_001 --llm-external \
   --llm-cmd "openai chat.completions.create -m gpt-4.1"
 ```
 
@@ -529,14 +532,14 @@ export RW_LLM_CMD="codex run"
 # 4️⃣ Ollama（ローカルLLM）
 
 ```bash
-./bin/generate_notes exp_001 --llm \
+./bin/generate_notes exp_001 --llm-external \
   --llm-cmd "ollama run llama3"
 ```
 
 軽量モデル：
 
 ```bash
-./bin/generate_notes exp_001 --llm \
+./bin/generate_notes exp_001 --llm-external \
   --llm-cmd "ollama run mistral"
 ```
 
@@ -545,7 +548,7 @@ export RW_LLM_CMD="codex run"
 # 5️⃣ llama.cpp
 
 ```bash
-./bin/generate_notes exp_001 --llm \
+./bin/generate_notes exp_001 --llm-external \
   --llm-cmd "./main -m model.gguf"
 ```
 
@@ -563,7 +566,7 @@ codex run --model gpt-4.1 --temperature 0.3
 実行：
 
 ```bash
-./bin/generate_notes exp_001 --llm --llm-cmd "./bin/llm_notes"
+./bin/generate_notes exp_001 --llm-external --llm-cmd "./bin/llm_notes"
 ```
 
 👉 将来の変更に強い。
@@ -581,7 +584,7 @@ export RW_LLM_CMD="codex run --model gpt-4.1 --temperature 0.2"
 そして：
 
 ```bash
-./bin/generate_notes exp_001 --llm
+./bin/generate_notes exp_001 --llm-external
 ```
 
 だけで動く。
@@ -605,4 +608,3 @@ export RW_LLM_CMD="codex run --model gpt-4.1 --temperature 0.2"
 3. ローカルLLMは精度が落ちる可能性
 
 ------
-

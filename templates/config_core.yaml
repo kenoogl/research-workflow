@@ -14,4 +14,13 @@ execution:
 postprocess:
   commands: []
 
+# Optional: external data reference (lightweight v0.1)
+# external_data:
+#   - name: materials_db
+#     type: database        # database | api | dataset | filesystem
+#     locator: "material_id=1234"   # query / ID / URL / path / DOI
+#     version: "v2.1"       # optional
+#     retrieved_at: "2026-03-03T10:12:00+09:00"  # optional
+#     note: "optional memo"
+
 run:

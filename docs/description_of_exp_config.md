@@ -5,22 +5,22 @@
 ```yaml
 experiment:
   name: __EXP_NAME__
-  description: __DESCRIPTION__
+  description: cg without preconditioner
 
 output:
   results_dir: results/__EXP_NAME__
 
 execution:
   command: >
-  julia --project=. src/main.jl 
-  --output-dir results/__EXP_NAME__
+    julia --project scripts/run_solver.jl
+    --config experiments/__EXP_NAME__/config.yaml
   
 postprocess:
   commands: []
 ```
 
 - `__EXP_NAME__` は実験名を表し、プレースホルダにする
-- `__DESCRIPTION__` は人のための注釈
+- `description` は人のための注釈（実テンプレートは固定文言で生成され、必要なら手動で更新）
 - `execution.command`は例として提示。実際にはユーザのコマンドに置換。
 
 - 後処理があれば、`commands`の配列にコマンド列を追加
@@ -86,7 +86,8 @@ run_exp がチェックするのは **コア部分だけ**。
 1. experiment.name == exp_name
 2. output.results_dir == results/<exp_name>
 3. execution.command 存在
-4. execution.command に results/<exp_name> が含まれる（実行コマンド依存だが安全策）
+4. execution.command が `--config experiments/<exp_name>/config.yaml` を参照している
+5. execution.command に実行時パラメータ（`--nx`, `--omega` など）を直書きしない
 
 ------
 

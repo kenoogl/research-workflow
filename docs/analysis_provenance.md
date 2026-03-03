@@ -101,7 +101,7 @@ Codex CLI 内で analysis を回すが：
 
 ------
 
-# 🏗 3️⃣ 現在の仕様（確定版）
+# 🏗 3️⃣ 現在の仕様
 
 ------
 
@@ -112,7 +112,7 @@ analysis/<ana>/
   meta.json
   discussion.md
   events/
-  inputs_snapshot/   (add_input時に生成)
+  inputs_snapshot/   (新規入力参照時に生成)
 ```
 
 ------
@@ -143,10 +143,23 @@ analysis/<ana>/
 
 ## Session 1 (date)
 
-### AI Summary
-### AI Analysis
+### AI Summary (Facts)
+- 数値のみ
+- 解釈なし
+
+### AI Analysis (Evaluation)
+- For each objective:
+  - OX
+  - Quantitative:
+  - Qualitative:
+  - Baseline:
+  - Verdict:
+  - Proposed Status:
+
 ### Human Notes
 ```
+
+AGENTS.md を正とし、discussion 追記時は上記粒度（Quantitative/Qualitative/Baseline/Verdict/Proposed Status）を必須とする。
 
 ------
 
@@ -170,7 +183,7 @@ NNN_response.md
 
 ## 📂 inputs_snapshot/
 
-add_input 時に生成：
+新規入力を参照したときに生成：
 
 ```
 inputs_snapshot/<exp_name>/
@@ -180,13 +193,11 @@ inputs_snapshot/<exp_name>/
 
 immutable。
 
-#### add_input
+#### 入力追加イベント
 
-##### 🔹 add_input CLI は補助機能として残す
+##### 🔹 入力追加はプロンプト駆動のイベント記録で扱う（専用CLIは持たない）
 
-##### 🔹 日常運用では使わない
-
-##### 🔹 LLM対話駆動を正規ルートにする
+##### 🔹 `events/NNN_add_input.md` を記録し、meta.json の experiments を更新する
 
 ------
 
@@ -194,14 +205,16 @@ immutable。
 
 analysis フェーズでは：
 
-- CLIコマンドを打たない
-- LLMとの対話で進める
+- 開始はユーザープロンプトで行う
+- 開始時に分析名（topic）を明示する
+- 指定された分析名で `./bin/new_analysis <analysis_name>` を実行して初期化する
+- 初期化後は LLMとの対話で進める
 
 AGENTS.md が次を強制：
 
 1. promptを events に保存
 2. responseを events に保存
-3. 必要なら add_input を提案
+3. 新規入力参照時は snapshot と `events/NNN_add_input.md` を記録
 4. セッション終了時に discussion.md を更新
 
 ------
@@ -221,6 +234,7 @@ When working inside analysis/<ana>:
 - Save response to events/<NNN>_response.md
 - Never edit previous events.
 - Update discussion.md only by appending.
+- For objective evaluation, include Quantitative/Qualitative/Baseline/Verdict/Proposed Status.
 ```
 
 LLMの行動を構造的に縛る。
@@ -358,196 +372,9 @@ AGENTS.mdで保存を強制し、
 
 ------
 
-# 📄 `AGENTS.md`（analysis用・完全版 v1.0）
+# 📄 [`AGENTS.md`](../AGENTS.md)
 
-```markdown
-# AGENTS.md
-## Analysis Provenance Protocol
-
-This file defines the mandatory behavior for any LLM operating
-inside the `analysis/` directory.
-
-The goal is to guarantee analysis provenance:
-Every reasoning step must be reproducible and traceable.
-
----
-
-# 1. Core Principle
-
-Analysis is event-based, not state-based.
-
-Every interaction MUST be recorded as an immutable event.
-
-Never overwrite.
-Never edit past events.
-Never delete history.
-
----
-
-# 2. When This Protocol Applies
-
-This protocol applies when:
-
-- Working inside `analysis/<ana>/`
-- Generating summaries or evaluations
-- Adding new experimental inputs
-- Updating discussion.md
-
-If unsure: assume it applies.
-
----
-
-# 3. Event Recording Rules
-
-For every reasoning interaction:
-
-1. Determine next event number:
-   - 3-digit zero-padded
-   - max(existing) + 1
-   - never reuse numbers
-
-2. Save the user prompt to:
-   events/NNN_prompt.md
-
-3. Save the LLM response to:
-   events/NNN_response.md
-
-4. Do not modify older event files.
-
----
-
-# 4. Input Snapshot Rule
-
-If a new experiment is referenced during analysis:
-
-1. Create `inputs_snapshot/` if it does not exist.
-2. Copy the following into:
-   inputs_snapshot/<exp_name>/
-
-   - experiments/<exp_name>/config.yaml
-   - results/<exp_name>/run_summary.json
-
-3. Record the action as:
-   events/NNN_add_input.md
-
-4. Update meta.json:
-   - append experiment name to "experiments" array
-
-Never use symlinks.
-Snapshots must be immutable copies.
-
----
-
-# 5. Discussion Update Rule
-
-discussion.md is a distilled summary.
-It is append-only.
-
-When:
-
-- A session reaches a logical stopping point
-- A major conclusion is formed
-- The user requests summary
-
-Then:
-
-Append a new section:
-
-## Session N (YYYY-MM-DD)
-
-Include:
-
-### AI Summary
-- Facts only
-
-### AI Analysis
-- Alignment with objective
-- Hypothesis candidates
-- Counterarguments
-- Minimal next experiment
-
-### Human Notes
-- Leave blank unless user provides input
-
-Never erase prior sessions.
-
----
-
-# 6. Objective Handling
-
-The initial objective is stored in discussion.md.
-
-If the objective changes:
-
-- Append:
-  ## Objective (Updated - DATE)
-- Do not delete prior objective.
-
----
-
-# 7. Model Independence
-
-Do not rely on:
-
-- Hidden reasoning traces
-- System prompts
-- External memory
-
-All reasoning that influences conclusions
-must appear in events/ files.
-
----
-
-# 8. Non-Determinism Acknowledgement
-
-LLM outputs are non-deterministic.
-
-Provenance guarantees:
-
-- What inputs were seen
-- What prompts were issued
-- What outputs were generated
-
-It does NOT guarantee identical future outputs.
-
----
-
-# 9. Forbidden Actions
-
-Never:
-
-- Modify past events
-- Merge multiple reasoning steps without recording
-- Add analysis conclusions without event history
-- Update discussion.md without event records
-
----
-
-# 10. Fallback Rule
-
-If automatic saving fails:
-
-- Stop
-- Notify the user
-- Do not continue analysis silently
-
-Provenance integrity has priority over convenience.
-
----
-
-# 11. Philosophy
-
-Experiments guarantee numerical reproducibility.
-Analysis guarantees cognitive traceability.
-
-This protocol enforces cognitive traceability.
-```
-
-------
-
-# 🧠 これで保証されるもの
-
-この AGENTS.md により：
+ AGENTS.md により：
 
 - 分析はイベント駆動になる
 - LLM対話は必ず保存される
@@ -568,10 +395,12 @@ This protocol enforces cognitive traceability.
 
 ------
 
-あなたのフレームワークは今、
+# 🛠 [new_analysis](../templates/project/bin/new_analysis)
 
-- 実験再現性
-- 思考再現性
-- 知識蒸留
+`bin/new_analysis` は以下の実装を推奨します。
 
-の三層構造を持っています。
+- `analysis_name` を安全な文字のみに制限
+- `set -euo pipefail` でシェル安全性を強化
+- `discussion.md` を AGENTS.md の必須構造に合わせる
+- 初回イベント保存 (`events/001_prompt.md`, `events/001_response.md`) を明示
+
